@@ -27,5 +27,5 @@ class LogReader:
                 pt = Point(float(entries[0]), float(entries[1]), float(entries[2]), Point.label_dict[entries[4]] ,[float(entry) for entry in entries[5:]])
                 
                 self._points.append(pt)
-                
+        print '[LogReader] '+str(len(self._points))+' points loaded'
         return self._points
