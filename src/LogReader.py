@@ -16,6 +16,7 @@ class LogReader:
         self._points = []
         
         with open(self._path) as f:
+            print '[LogReader] Opened file '+self._path
             for line in f:
                 if line[0] == '#':
                     continue
@@ -23,7 +24,7 @@ class LogReader:
                 if len(entries) < 1:
                     continue
                 
-                pt = Point(float(entries[0]), float(entries[1]), entries[2], Point.label_dict[entries[3]] ,[float(entry) for entry in entries[5:]])
+                pt = Point(float(entries[0]), float(entries[1]), float(entries[2]), Point.label_dict[entries[4]] ,[float(entry) for entry in entries[5:]])
                 
                 self._points.append(pt)
                 
