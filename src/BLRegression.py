@@ -40,7 +40,7 @@ class BLRegression:
         observation_error_sigma = 0.2;
         prior_mean = 0.0*np.ones(self.trainX.shape[1]);
         prior_sigma = 1.0;
-        weight_prior_P = prior_sigma * np.diag(np.ones(self.X.shape[1]))
+        weight_prior_P = prior_sigma**2 * np.diag(np.ones(self.X.shape[1]))
         weight_prior_J = np.dot(weight_prior_P, prior_mean)
         #In a loop, for every training point, update the posterior
         for data_pt in range(self.trainX.shape[0]):
@@ -56,7 +56,7 @@ class BLRegression:
         
     def eval_posterior(self, weight_prior_P, weight_prior_J, observation_error_sigma,  dataX, dataY):
         J_new = np.dot(dataX, dataY)/observation_error_sigma**2 + weight_prior_J
-        P_new = np.dot(dataX, dataX)/observation_error_sigma**2 + weight_prior_P
+        P_new = np.outer(dataX, dataX)/observation_error_sigma**2 + weight_prior_P
         return (P_new, J_new)
     
     def predict(self, dataX):
