@@ -5,9 +5,6 @@ An implementation of Bayesian Linear Regression/Classification
 
 import numpy as np
 from scipy.linalg.basic import inv
-import pdb
-from LogReader import LogReader
-from Point import Point
 
 class BLRegression:
     
@@ -20,7 +17,7 @@ class BLRegression:
         self.prior_mean = params[1]*np.ones(self.trainX.shape[1]);
         self.prior_sigma = params[2];
         
-    def regress(self):
+    def train(self):
         '''
         The MAP estimate of p(w| D) is the mean of the posterior (which is a gaussian distribution)
         For prediction, we need p(y| x, D)
@@ -69,64 +66,6 @@ class BLRegression:
     def linear_feature(self, dataX):
         return np.append(dataX, 1.0)
 
-class OneVsAll:
-    def __init__(self, features, labels, classifier_class, classifier_params, test_features = None, test_labels = None):
-               
-        if test_features is None:
-            self.X = np.array(features)
-            self.Y = np.array(labels)
-            
-            hold_out_index = self.X.shape[0]*0.8
-            
-            self.trainX = self.X[:hold_out_index,:]
-            self.trainY = self.Y[:hold_out_index]
-            
-            self.testX  = self.X[hold_out_index:, :]
-            self.testY  = self.Y[hold_out_index:]
-        else:
-            self.trainX = np.array(features)
-            self.trainY = np.array(labels)
-            
-            self.testX = np.array(test_features)
-            self.testY = np.array(test_labels)
-        
-        self.classifier_class = classifier_class
-        self.classifier_params = classifier_params
-        self.classifiers = []
-        
-        
-    def train(self):
-        print '[OneVsAll] Training individual predictors...'
-        for label in Point.label_dict:
-            #Separate the data into positive and negative classes
-            trainY = self.trainY.copy()
-            trainY[trainY != Point.label_dict[label]] = -1
-            trainY[trainY != -1] = 1
-            
-            #Train the classifier
-            classifier = self.classifier_class(self.trainX, trainY, self.classifier_params)
-            classifier.regress()
-            self.classifiers.append(classifier)
-            print '[OneVsAll] Trained ', label
-        print '[OneVsAll] Done!'
-        
-    def predict(self, dataX):
-        #Check if sane data point
-        assert(dataX.shape == self.trainX[0].shape)
-        predicted_confidences = [classifier.predict(dataX) for classifier in self.classifiers]
-        label = predicted_confidences.index(max(predicted_confidences))
-        return label
-    
-    def test(self):
-        evals = []
-        for index in range(len(self.testX)):
-            dataX = self.testX[index]
-            true_label = self.testY[index]
-            predicted_label = self.predict(dataX)
-            evals.append(self.classifiers[predicted_label].test(dataX, true_label))
-        #Now evaluate accuracy
-        #True == 1, thus sum
-        print '[OneVsAll] Accuracy = ', float(sum(evals))/len(evals)
 
 if __name__ == "__main__":
     #Test the regression
@@ -136,23 +75,9 @@ if __name__ == "__main__":
     Xs = np.append(np.vstack(np.random.uniform(size=num)), np.ones((num,1)), 1)
     Ys = np.dot(Xs, [-0.3, 0.5]) + np.random.normal(0, 0.2, size=num)
     
-    bl_params = [0.2, 0, 1.0]
+    bl_params = [0.1, 0, 1.0]
     test_regression = BLRegression(Xs, Ys, bl_params)
-    test_regression.regress()
+    test_regression.train()
     print("\nTest::Mean Vector = \n"+repr(test_regression.mean)+"Test::Covariance = \n"+repr(test_regression.cov))
     
     print test_regression.predict(np.array([0.5, 1])), test_regression.test(np.array([0.5, 1]), 1)
-    
-    #Now let's get down to business
-    #Load a log
-    train_log_object = LogReader('../data/oakland_part3_am_rf.node_features')
-    train_points = train_log_object.read()
-    test_log_object = LogReader('../data/oakland_part3_an_rf.node_features')
-    test_points = test_log_object.read()
-    
-#     orchestrator = OneVsAll([point._feature for point in train_points], [point._label for point in train_points], BLRegression)
-    orchestrator = OneVsAll([point._feature for point in train_points], [point._label for point in train_points], 
-                            BLRegression, bl_params,
-                            [point._feature for point in test_points], [point._label for point in test_points])
-    orchestrator.train()
-    orchestrator.test()
