@@ -57,10 +57,10 @@ class BLRegression:
         assert(dataX.shape == self.trainX[0].shape)
         #@todo: Integrate over weights distribution for this data point, or just take the mean?
         #Sample from the likelihood normal
-        return np.random.normal(np.dot(self.mean, dataX), self.observation_error_sigma)
+        return np.random.normal(np.dot(self.mean, dataX), self.observation_error_sigma) 
         
     def test(self, dataX, true_label):
-        if self.predict(dataX) == true_label:
+        if self.predict(dataX)*true_label > 0:
             return True
         else:
             return False
@@ -105,7 +105,17 @@ class OneVsAll:
         predicted_confidences = [classifier.predict(dataX) for classifier in self.classifiers]
         label = predicted_confidences.index(max(predicted_confidences))
         return label
-        
+    
+    def test(self):
+        evals = []
+        for index in range(len(self.testX)):
+            dataX = self.testX[index]
+            true_label = self.testY[index]
+            predicted_label = self.predict(dataX)
+            evals.append(self.classifiers[predicted_label].test(dataX, true_label))
+        #Now evaluate accuracy
+        #True == 1, thus sum
+        print '[OneVsAll] Accuracy = ', float(sum(evals))/len(evals)
 
 if __name__ == "__main__":
     #Test the regression
@@ -119,7 +129,7 @@ if __name__ == "__main__":
     test_regression.regress()
     print("\nTest::Mean Vector = \n"+repr(test_regression.mean)+"Test::Covariance = \n"+repr(test_regression.cov))
     
-    print test_regression.predict(np.array([0.5, 1]))
+    print test_regression.predict(np.array([0.5, 1])), test_regression.test(np.array([0.5, 1]), 1)
     
     #Now let's get down to business
     #Load a log
@@ -128,3 +138,4 @@ if __name__ == "__main__":
     
     orchestrator = OneVsAll(np.array([point._feature for point in points]), np.array([point._label for point in points]), BLRegression)
     orchestrator.train()
+    orchestrator.test()
