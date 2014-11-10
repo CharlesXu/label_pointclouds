@@ -74,7 +74,7 @@ class MCWinnow:
 
     def test(self, data_pt,true_label):
 
-        predicted_label = self.predict(data_pt)
+        (predicted_label,tmp) = self.predict(data_pt)
         if predicted_label == true_label:
             return True
         else:
@@ -152,7 +152,7 @@ if __name__ == "__main__":
     n = testYs.shape[0]
     binary_test_features = threshold_to_binary(testXs,feat_threshold)
     test_err = 0
-    for index in range(n):
-        if test_regression.test(binary_test_features[index,:],testYs[index]):
+    for index in range(30):
+        if not(test_regression.test(binary_test_features[index,:],testYs[index])):
             test_err += 1
     print "Number of mistakes at testing ",test_err
