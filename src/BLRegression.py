@@ -11,13 +11,14 @@ from Point import Point
 
 class BLRegression:
     
-    def __init__(self, features, classes):
+    def __init__(self, features, classes, params):
+        assert(len(params) == 3)
         self.trainX = features
         self.trainY = classes
         
-        self.observation_error_sigma = 0.2
-        self.prior_mean = 0.0*np.ones(self.trainX.shape[1]);
-        self.prior_sigma = 1.0;
+        self.observation_error_sigma = params[0]
+        self.prior_mean = params[1]*np.ones(self.trainX.shape[1]);
+        self.prior_sigma = params[2];
         
     def regress(self):
         '''
@@ -69,20 +70,30 @@ class BLRegression:
         return np.append(dataX, 1.0)
 
 class OneVsAll:
-    def __init__(self, features, classes, classifier_class):
-        self.X = features
-        self.Y = classes
-        
-        hold_out_index = self.X.shape[0]*0.8
-        
-        self.trainX = self.X[:hold_out_index,:]
-        self.trainY = self.Y[:hold_out_index]
-        
-        self.testX  = self.X[hold_out_index:, :]
-        self.testY  = self.Y[hold_out_index:]
+    def __init__(self, features, labels, classifier_class, classifier_params, test_features = None, test_labels = None):
+               
+        if test_features is None:
+            self.X = np.array(features)
+            self.Y = np.array(labels)
+            
+            hold_out_index = self.X.shape[0]*0.8
+            
+            self.trainX = self.X[:hold_out_index,:]
+            self.trainY = self.Y[:hold_out_index]
+            
+            self.testX  = self.X[hold_out_index:, :]
+            self.testY  = self.Y[hold_out_index:]
+        else:
+            self.trainX = np.array(features)
+            self.trainY = np.array(labels)
+            
+            self.testX = np.array(test_features)
+            self.testY = np.array(test_labels)
         
         self.classifier_class = classifier_class
+        self.classifier_params = classifier_params
         self.classifiers = []
+        
         
     def train(self):
         print '[OneVsAll] Training individual predictors...'
@@ -93,7 +104,7 @@ class OneVsAll:
             trainY[trainY != -1] = 1
             
             #Train the classifier
-            classifier = self.classifier_class(self.trainX, trainY)
+            classifier = self.classifier_class(self.trainX, trainY, self.classifier_params)
             classifier.regress()
             self.classifiers.append(classifier)
             print '[OneVsAll] Trained ', label
@@ -125,7 +136,8 @@ if __name__ == "__main__":
     Xs = np.append(np.vstack(np.random.uniform(size=num)), np.ones((num,1)), 1)
     Ys = np.dot(Xs, [-0.3, 0.5]) + np.random.normal(0, 0.2, size=num)
     
-    test_regression = BLRegression(Xs, Ys)
+    bl_params = [0.2, 0, 1.0]
+    test_regression = BLRegression(Xs, Ys, bl_params)
     test_regression.regress()
     print("\nTest::Mean Vector = \n"+repr(test_regression.mean)+"Test::Covariance = \n"+repr(test_regression.cov))
     
@@ -133,9 +145,14 @@ if __name__ == "__main__":
     
     #Now let's get down to business
     #Load a log
-    log_object = LogReader('../data/oakland_part3_am_rf.node_features')
-    points = log_object.read()
+    train_log_object = LogReader('../data/oakland_part3_am_rf.node_features')
+    train_points = train_log_object.read()
+    test_log_object = LogReader('../data/oakland_part3_an_rf.node_features')
+    test_points = test_log_object.read()
     
-    orchestrator = OneVsAll(np.array([point._feature for point in points]), np.array([point._label for point in points]), BLRegression)
+#     orchestrator = OneVsAll([point._feature for point in train_points], [point._label for point in train_points], BLRegression)
+    orchestrator = OneVsAll([point._feature for point in train_points], [point._label for point in train_points], 
+                            BLRegression, bl_params,
+                            [point._feature for point in test_points], [point._label for point in test_points])
     orchestrator.train()
     orchestrator.test()
