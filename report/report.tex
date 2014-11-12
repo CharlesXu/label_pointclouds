@@ -1,0 +1,43 @@
+\documentclass[10pt,a4paper]{article}
+\usepackage[utf8]{inputenc}
+\usepackage{amsmath}
+\usepackage{amsfonts}
+\usepackage{amssymb}
+\usepackage{graphicx}
+\usepackage{hyperref}
+\author{Jessica Chemali, Kumar Shaurya Shankar, Trenton Tabor\\kumarsha@cs.cmu.edu}
+\title{16831 RoboStats Lab 2: \\Online Learning}
+\begin{document}
+\maketitle
+\section{Overview}
+\subsection{Discussion about Dataset}
+Some classes are easily distinguishable but others like wire/pole are not.
+%----------------------------------------------------------------------
+\section{Implemented methods}
+\subsection{Bayes Linear Regression}
+\subsubsection{Implementation}
+The Bayes Linear Regressor has been implemented in Python, as the rest of the framework. The external library dependency is only on numpy for matrix operations and normal distribution functions. The algorithm has not been modified for the purpose of this implementation.
+\subsubsection{Parameter Selection}
+The three parameter choices are the initial natural parameters for the prior on the weight vector, and the noise variance for the observation error. The latter was arbitrarily chosen, but **TODO*** should be cross validated. For the prior, a 0 mean weight vector was chosen, and a unit precision matrix was chosen. ***TODO**** can I provide better priors looking at data, for instance covariance of data?
+\subsubsection{Performance}
+figure
+
+\subsubsection{Learning Duration}
+Learning is very fast since this is linear regression. ***TODO*** Timing?
+
+\subsubsection{Robustness to Noise}
+****TODO*** Don't expect to be too robust.
+%------------------------------------------------------------------------
+\subsection{Multi Class Winnow}
+
+%----------------------------------------------------------------------
+\subsection{Kernalized SVM}
+
+
+%-----------------------------------------------------------------------
+\section{Comparative Analysis of Learners}
+SVM fits the best to the data due to the advantage of the kernels.
+
+\section{Future Work}
+Augment features using spatial context, e.g., 3D HoG.\\
+\end{document}
