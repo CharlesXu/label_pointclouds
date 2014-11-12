@@ -57,16 +57,16 @@ class OneVsAll:
         #Check if sane data point
         assert(dataX.shape == self.trainX[0].shape)
         predicted_confidences = [classifier.predict(dataX) for classifier in self.classifiers]
-        label = predicted_confidences.index(max(predicted_confidences))
-        return label
+        classifier_index = predicted_confidences.index(max(predicted_confidences))
+        return classifier_index
     
     def test(self):
         evals = []
         for index in range(len(self.testX)):
             dataX = self.testX[index]
             true_label = self.testY[index]
-            predicted_label = self.predict(dataX)
-            evals.append(self.classifiers[predicted_label].test(dataX, true_label))
+            classifier_index = self.predict(dataX)
+            evals.append(self.classifiers[classifier_index].test(dataX, true_label))
         #Now evaluate accuracy
         #True == 1, thus sum
         print '[OneVsAll] Accuracy = ', float(sum(evals))/len(evals)
@@ -83,8 +83,8 @@ if __name__ == "__main__":
     bl_params = [0.2, 0.0, 1.0]
     
 #     orchestrator = OneVsAll([point._feature for point in train_points], [point._label for point in train_points], BLRegression)
-    orchestrator = OneVsAll([point._feature for point in train_points], [point._label for point in train_points], 
+    orchestrator = OneVsAll([point.add_corrupted_features(1) for point in train_points], [point._label for point in train_points], 
                             BLRegression, bl_params,
-                            [point._feature for point in test_points], [point._label for point in test_points])
+                            [point.add_corrupted_features(1) for point in test_points], [point._label for point in test_points])
     orchestrator.train()
     orchestrator.test()
