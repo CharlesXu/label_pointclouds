@@ -3,6 +3,7 @@
 A simple class for defining Points
 '''
 import numpy as np
+import pdb
 
 class Point:
     
@@ -15,3 +16,11 @@ class Point:
         self._label = label
         self._feature = np.array(feature)
     
+    def add_random_features(self, num_features):
+        return np.append(self._feature, np.random.rand(num_features)) 
+    
+    def add_corrupted_features(self, num_copies=1):
+        a =np.array([])
+        for i in range(num_copies):
+            a = np.append(a, np.random.multivariate_normal(self._feature, np.diag(np.ones(self._feature.shape[0]))) )
+        return a 
