@@ -90,6 +90,11 @@ class OneVsAll:
         ax.set_yticklabels([''] + labels)
         plt.xlabel('Predicted')
         plt.ylabel('True')
+        for x in xrange(len(cm)):
+            for y in xrange(len(cm)):
+                ax.annotate(str(cm[x][y]), xy=(y, x), 
+                            horizontalalignment='center',
+                            verticalalignment='center')
         plt.show()
         
         
