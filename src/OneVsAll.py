@@ -11,6 +11,9 @@ import numpy as np
 from Point import Point
 from LogReader import LogReader
 from BLRegression import BLRegression
+from sklearn.metrics import confusion_matrix
+import matplotlib.pyplot as plt
+import pdb
 
 class OneVsAll:
     def __init__(self, features, labels, classifier_class, classifier_params, test_features = None, test_labels = None):
@@ -40,36 +43,54 @@ class OneVsAll:
         
     def train(self):
         print '[OneVsAll] Training individual predictors...'
-        for label in Point.label_dict:
+        for label in range(len(Point.label_dict)):
             #Separate the data into positive and negative classes
             trainY = self.trainY.copy()
-            trainY[trainY != Point.label_dict[label]] = -1
+            trainY[trainY != label] = -1
             trainY[trainY != -1] = 1
             
             #Train the classifier
             classifier = self.classifier_class(self.trainX, trainY, self.classifier_params)
             classifier.train()
             self.classifiers.append(classifier)
-            print '[OneVsAll] Trained ', label
+            print '[OneVsAll] Trained ', Point.label_rev_dict[label]
         print '[OneVsAll] Done!'
         
     def predict(self, dataX):
         #Check if sane data point
         assert(dataX.shape == self.trainX[0].shape)
         predicted_confidences = [classifier.predict(dataX) for classifier in self.classifiers]
-        classifier_index = predicted_confidences.index(max(predicted_confidences))
-        return classifier_index
+        best_classifier = predicted_confidences.index(max(predicted_confidences))
+        return best_classifier
     
     def test(self):
         evals = []
+        true_labels = []
+        predicted_labels = []
         for index in range(len(self.testX)):
             dataX = self.testX[index]
             true_label = self.testY[index]
-            classifier_index = self.predict(dataX)
-            evals.append(self.classifiers[classifier_index].test(dataX, true_label))
+            predicted_label = self.predict(dataX)
+            evals.append(self.classifiers[predicted_label].test(dataX, true_label)) 
+            true_labels.append(true_label)
+            predicted_labels.append(predicted_label)
         #Now evaluate accuracy
         #True == 1, thus sum
         print '[OneVsAll] Accuracy = ', float(sum(evals))/len(evals)
+        #Generate confusion matrix
+        labels = [Point.label_rev_dict[i] for i in range(len(Point.label_dict))]
+        
+        cm =  confusion_matrix(true_labels, predicted_labels )
+        fig = plt.figure()
+        ax = fig.add_subplot(111)
+        cax = ax.matshow(cm)
+        plt.title('Confusion matrix of the classifier')
+        fig.colorbar(cax)
+        ax.set_xticklabels([''] + labels)
+        ax.set_yticklabels([''] + labels)
+        plt.xlabel('Predicted')
+        plt.ylabel('True')
+        plt.show()
         
         
 if __name__ == "__main__":
@@ -83,8 +104,8 @@ if __name__ == "__main__":
     bl_params = [0.2, 0.0, 1.0]
     
 #     orchestrator = OneVsAll([point._feature for point in train_points], [point._label for point in train_points], BLRegression)
-    orchestrator = OneVsAll([point.add_corrupted_features(1) for point in train_points], [point._label for point in train_points], 
+    orchestrator = OneVsAll([point._feature for point in train_points], [point._label for point in train_points], 
                             BLRegression, bl_params,
-                            [point.add_corrupted_features(1) for point in test_points], [point._label for point in test_points])
+                            [point._feature for point in test_points], [point._label for point in test_points])
     orchestrator.train()
     orchestrator.test()
