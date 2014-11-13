@@ -31,6 +31,11 @@ class OKSVM:
             err =  self.eval_loss(prediction, self.trainY[data_pt])
 #             print 'err', err
 #             print data_pt
+
+            self.alphas = self.alphas * (1.0 - 2*self.learning_rate*self.regularizer) 
+            indices = self.alphas>1e-10
+            self.alphas = self.alphas[indices]
+            self.supportVecs = self.supportVecs[indices,:]
             if err > 0:
 #                 self.supportVecs = np.concatenate((self.supportVecs.T, np.array([self.trainX[data_pt]]))).T
                 
@@ -41,7 +46,6 @@ class OKSVM:
                 update = {  add kernel wighted by \eta y_t if correct
                          {  shrink all other weights by 1 - 2 \eta \lambda  
                 '''
-                self.alphas = self.alphas * (1.0 - 2*self.learning_rate*self.regularizer)
 #                 print 'supportVecs', self.supportVecs
                 self.alphas = np.append(self.alphas, self.learning_rate*self.trainY[data_pt])
 
