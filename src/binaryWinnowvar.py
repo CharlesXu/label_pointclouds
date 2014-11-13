@@ -43,8 +43,8 @@ class binaryWinnowvar:
         err_num = 0
 
         for index in range(self.trainX.shape[0]):
-            prediction = np.dot(self.trainX[index,:], self.weights)
-            if prediction<self.thresh:
+            prediction = np.dot(self.trainX[index, :], self.weights)
+            if prediction < self.thresh:
                 predicted_label = -1
             else:
                 predicted_label = 1
@@ -67,13 +67,11 @@ class binaryWinnowvar:
         tmp = self.weights.T*np.exp(self.nu*true_label*data_pt)
         self.weights = tmp.T
 
+    def test(self, data_pt, true_label):
 
-    def test(self, data_pt,true_label):
-
-        if self.predict(data_pt) >= self.thresh and true_label==1:
+        if self.predict(data_pt) >= self.thresh and true_label == 1:
             return True
-
-        elif self.predict(data_pt) < self.thresh and true_label==-1:
+        elif self.predict(data_pt) < self.thresh and true_label == -1:
             return True
         else:
             return False

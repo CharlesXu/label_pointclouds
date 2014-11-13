@@ -53,10 +53,11 @@ class OneVsAll:
             trainY = self.trainY.copy()
             if not(self.classifier_class == binaryWinnow):
                 trainY[trainY != label] = -1
-                trainY[trainY != -1] = 10
+                trainY[trainY != -1] = 1
             else:
+                trainY[trainY != label] = 10
+                trainY[trainY != 10] = 1
                 trainY[trainY != label] = 0
-                trainY[trainY != 0] = 1
 
             #Train the classifier
             classifier = self.classifier_class(self.trainX, trainY, self.classifier_params)
@@ -112,36 +113,76 @@ class OneVsAll:
         
         return predicted_labels
         
-        
+
+def correct_imbalance(Xs,Ys):
+    class_id = np.unique(Ys)
+    h = np.bincount(Ys)
+    d = np.std(h[0])
+    mode = np.max(h)
+    print "most numerous class is ", np.argmax(h), " it has ", mode, " points"
+    newXs = Xs.copy()
+    newYs = Ys.copy()
+    newYs.shape = (Xs.shape[0],1)
+    print "h", h
+    for i in range(len(class_id)):
+        print "i: ",i
+        ratio_to_mode = h[i]/float(mode)
+        if ratio_to_mode < 0.8:
+            print "adding ",int((0.8 - ratio_to_mode)*mode)," points to class",i
+            index = np.where(Ys==i)
+            tmp_index = np.random.random_integers(0,len(index),int((0.8 - ratio_to_mode)*mode))
+            newXs = np.vstack((newXs,Xs[index[0][tmp_index],:]))
+            tmp = i*np.ones([int((0.8 - ratio_to_mode)*mode),1])
+            print newYs.shape,tmp.shape
+            newYs = np.vstack((newYs, tmp))
+    return (newXs,newYs)
+
+
+
 if __name__ == "__main__":
     #Sample implementation for a Bayes Linear Classifier
     #Load a log
-    train_log_object = LogReader('../data/oakland_part3_am_rf.node_features')
+    train_log_object = LogReader('../data/oakland_part3_an_rf.node_features')
     train_points = train_log_object.read()
     train_binary_features = np.load('an_binary_features2.npy')
     feat_threshold =  np.load('an_binary_threshold2.npy')
-    test_log_object = LogReader('../data/oakland_part3_an_rf.node_features')
+    test_log_object = LogReader('../data/oakland_part3_am_rf.node_features')
     test_points = test_log_object.read()
     test_binary_features = threshold_to_binary(np.array([point._feature for point in test_points]),feat_threshold)
 
     bl_params = [0.2, 0.0, 1.0]
-    
+
+    trainXs = np.array([point._feature for point in train_points])
+    trainYs = np.array([point._label for point in train_points])
+    testXs = np.array([point._feature for point in test_points])
+    testYs = np.array([point._label for point in test_points])
+
+    #(X,Y) = correct_imbalance(trainXs,trainYs)
 #     orchestrator = OneVsAll([point._feature for point in train_points], [point._label for point in train_points], BLRegression)
 
 #     orchestrator = OneVsAll(train_binary_features, [point._label for point in train_points],
 #                             binaryWinnow, bl_params,
 #                             test_binary_features, [point._label for point in test_points])
-    orchestrator = OneVsAll([point._feature for point in train_points], [point._label for point in train_points],
-                            BLRegression, bl_params,
-                            [point._feature for point in test_points], [point._label for point in test_points])
+    #orchestrator = OneVsAll([point._feature for point in train_points], [point._label for point in train_points],
+    #                        BLRegression, bl_params,
+    #                        [point._feature for point in test_points], [point._label for point in test_points])
+    #orchestrator = OneVsAll(train_binary_features, [point._label for point in train_points],
+    #                        binaryWinnow, bl_params,
+    #                        test_binary_features, [point._label for point in test_points])
+    #orchestrator = OneVsAll(trainXs, trainYs,binaryWinnowvar, [10,0.01],testXs, testYs)
+    #orchestrator = OneVsAll(trainXs, trainYs,BLRegression, bl_params,testXs, testYs)
+    #orchestrator = OneVsAll(train_binary_features, [point._label for point in train_points],
+    #                         binaryWinnow, [10,0.01],
+    #                         test_binary_features, [point._label for point in test_points])
 #     orchestrator.train()
 #     orchestrator.test()
-    
-    print 'And now Linear Kernel SVM'
+
+
+   # print 'And now Linear Kernel SVM'
 #     svm_params = [0.4, 'linear', 0.01]
 #     orchestrator = OneVsAll([point._feature for point in train_points], [point._label for point in train_points],
 #                             OKSVM, svm_params,
 #                             [point._feature for point in test_points], [point._label for point in test_points])
-    orchestrator.train()
-    predicted_labels = orchestrator.test()
-    plot_points.plot_predicted_labels(test_points, predicted_labels)
+    #orchestrator.train()
+    #predicted_labels = orchestrator.test()
+    #plot_points.plot_predicted_labels(test_points, predicted_labels)
