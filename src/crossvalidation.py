@@ -94,25 +94,26 @@ if __name__ == "__main__":
     test_log_object = LogReader('../data/oakland_part3_am_rf.node_features')
     test_points = test_log_object.read()
 
-    trainXs = np.array([point._feature for point in train_points])
-    trainYs = np.array([point._label for point in train_points])
-    (X,Y) = correct_imbalance(trainXs,trainYs)
+    X = np.array([point._feature for point in train_points])
+    Y = np.array([point._label for point in train_points])
 
     perm_idx = np.random.permutation(X.shape[0]) #range(X.shape[0])
     ds_train = Dataset(X[perm_idx,:],Y[perm_idx])
-    cv_fold = 2
+    cv_fold = 5
+    param_num = 9
     cm = np.zeros([cv_fold,cv_fold,5,5])
     acc = np.zeros([cv_fold,cv_fold])
-    params = [[5,0.01],[10,0.01],[15,0.01]]#,[5,0.001],[10,0.001],[15,0.001],[5,0.1],[10,0.1],[15,0.1]]
+    params = [[5,0.01],[10,0.01],[15,0.01],[5,0.001],[10,0.001],[15,0.001],[5,0.1],[10,0.1],[15,0.1]]
     cum_cm = np.zeros([cv_fold,5,5])
-    mean_confusion_matrix = np.zeros([3,5,5])
-    mean_accuracy = np.zeros([3,1])
-    for p in range(3):
+    mean_confusion_matrix = np.zeros([param_num,5,5])
+    std_confusion_matrix = np.zeros([param_num,5,5])
+    mean_accuracy = np.zeros([param_num,1])
+    for p in range(param_num):
         param = params[p]
         acc = np.zeros([cv_fold,cv_fold])
-        cm = np.zeros([cv_fold,5,5])
+        cm = np.zeros([cv_fold,5,5],dtype=int)
         for i in range(cv_fold):
-            print "training fold ",i+1," and testing on the others"
+            #print "training fold ",i+1," and testing on the others"
             idx_train = cv_idx_train(ds_train.r, cv_fold, i + 1)
             orchestrator = OneVsAll(X[perm_idx[idx_train],:], Y[perm_idx[idx_train]],binaryWinnowvar, param,[], [])
             orchestrator.train()
@@ -121,11 +122,13 @@ if __name__ == "__main__":
                 idx_test = cv_idx_test(ds_train.r, cv_fold, j + 1)
                 (predicted_labels,cm[j,:,:],acc[i,j]) = orchestrator.cvtest(X[perm_idx[idx_test],:],Y[perm_idx[idx_test]])
             cum_cm[i,:,:] = np.mean(cm,axis=0)
-        mean_confusion_matrix = np.mean(cum_cm,axis=0)
-        mean_accuracy = np.mean(acc)
+        mean_confusion_matrix[p,:,:] = np.mean(cum_cm,axis=0)
+        std_confusion_matrix[p,:,:] = np.std(cum_cm,axis=0)
+        mean_accuracy[p] = np.mean(acc)
 
-        print "confusion for param ",p," \n ", mean_confusion_matrix
-        print "accuracy for param ",p," : ",mean_accuracy
+        print "------------------mean confusion for param ",p," \n ", np.around(mean_confusion_matrix[p,:,:])
+        print "------------------std confusion for param ",p," \n ", std_confusion_matrix[p,:,:]
+        print "------------------accuracy for param ",p," : ",mean_accuracy[p]
 
 
 
