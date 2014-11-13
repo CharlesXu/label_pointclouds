@@ -6,7 +6,7 @@
 \usepackage{graphicx}
 \usepackage{hyperref}
 \usepackage[margin=1in]{geometry}
-
+\usepackage{color}
 
 \author{Jessica Chemali, Kumar Shaurya Shankar, Trenton Tabor\\kumarsha@cs.cmu.edu}
 \title{16831 RoboStats Lab 2: \\Online Learning}
@@ -14,8 +14,10 @@
 \maketitle
 \section{Overview}
 \subsection{Discussion about Dataset}
-Mention balancing of data here
-Mention Shuffling of data here
+Mention balancing of data here?
+Mention Shuffling of data here?
+Check robustness, and use it to decide what you would implement for your robot? (if robust, exponentiatedgradient is cool )
+I don't have ideas for future work regarding the exponentiatedgradient algorithm. The features need work, but i'm not sure what can be done.
 
 We implemented k-fold cross validation to tune our parameters.
 
@@ -53,7 +55,7 @@ The implementation of the algorithm is straightforward, it is only a few lines o
 
 For this algorithm we had 2 hyperparameters to tune: the learning rate $\nu$, and a threshold $\theta$. We looked at $\nu = \{0.001,0.01,0.1\} \times \theta = \{5,10,15\}$ and compared them against each other using 5-fold cross validation. the results were obtained with $\nu = 0.01$ and $\theta = 10$.
 
-
+{\color{blue} PLEASE ADD RESUlTS FROM noisy features for winnow. thanks you!}
 \begin{figure}[htp]
 \centering
 \includegraphics[scale=0.4,trim = 0.3 0.3 0.3 0.3,clip]{figs/winnow_amtoan_test1.eps}
@@ -65,6 +67,8 @@ For this algorithm we had 2 hyperparameters to tune: the learning rate $\nu$, an
 \caption{Multiclass Winnow trained on the an dataset, testing on the am}
 \label{}
 \end{figure}
+
+
 %----------------------------------------------------------------------
 \subsection{Kernalized SVM}
 
