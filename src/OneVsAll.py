@@ -145,7 +145,7 @@ class OneVsAll:
 #         labels = [Point.label_rev_dict[i] for i in [0,3]]
 
         cm =  confusion_matrix(true_labels, predicted_labels )
-        print "confusion matrix, ",cm
+        #print "confusion matrix, ",cm
         #fig = plt.figure()
         #ax = fig.add_subplot(111)
         #cax = ax.matshow(cm)
