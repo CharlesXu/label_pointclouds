@@ -13,6 +13,7 @@ from LogReader import LogReader
 from BLRegression import BLRegression
 from binaryWinnow import binaryWinnow
 from binaryWinnow import threshold_to_binary
+from binaryWinnowvar import binaryWinnowvar
 from sklearn.metrics import confusion_matrix
 import matplotlib.pyplot as plt
 import pdb
