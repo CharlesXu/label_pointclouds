@@ -30,7 +30,7 @@ class OKSVM:
 #             print 'label', self.trainY[data_pt]
             err =  self.eval_loss(prediction, self.trainY[data_pt])
 #             print 'err', err
-            print data_pt
+#             print data_pt
             if err > 0:
 #                 self.supportVecs = np.concatenate((self.supportVecs.T, np.array([self.trainX[data_pt]]))).T
                 

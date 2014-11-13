@@ -14,6 +14,8 @@ from BLRegression import BLRegression
 from sklearn.metrics import confusion_matrix
 import matplotlib.pyplot as plt
 import pdb
+from OnlineKernelSVM import OKSVM
+import plot_points
 
 class OneVsAll:
     def __init__(self, features, labels, classifier_class, classifier_params, test_features = None, test_labels = None):
@@ -97,6 +99,8 @@ class OneVsAll:
                             verticalalignment='center')
         plt.show()
         
+        return predicted_labels
+        
         
 if __name__ == "__main__":
     #Sample implementation for a Bayes Linear Classifier
@@ -109,8 +113,18 @@ if __name__ == "__main__":
     bl_params = [0.2, 0.0, 1.0]
     
 #     orchestrator = OneVsAll([point._feature for point in train_points], [point._label for point in train_points], BLRegression)
+#     orchestrator = OneVsAll([point._feature for point in train_points], [point._label for point in train_points], 
+#                             BLRegression, bl_params,
+#                             [point._feature for point in test_points], [point._label for point in test_points])
+#     orchestrator.train()
+#     orchestrator.test()
+    
+    print 'And now Linear Kernel SVM'
+    svm_params = [0.4, 'linear', 0.01]
     orchestrator = OneVsAll([point._feature for point in train_points], [point._label for point in train_points], 
-                            BLRegression, bl_params,
+                            OKSVM, svm_params,
                             [point._feature for point in test_points], [point._label for point in test_points])
     orchestrator.train()
-    orchestrator.test()
+    predicted_labels = orchestrator.test()
+    plot_points.plot_predicted_labels(test_points, predicted_labels)
+    
