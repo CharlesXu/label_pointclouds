@@ -13,6 +13,11 @@ from LogReader import LogReader
 from BLRegression import BLRegression
 from binaryWinnow import binaryWinnow
 from binaryWinnow import threshold_to_binary
+from sklearn.metrics import confusion_matrix
+import matplotlib.pyplot as plt
+import pdb
+from OnlineKernelSVM import OKSVM
+import plot_points
 
 class OneVsAll:
     def __init__(self, features, labels, classifier_class, classifier_params, test_features = None, test_labels = None):
@@ -42,58 +47,96 @@ class OneVsAll:
         
     def train(self):
         print '[OneVsAll] Training individual predictors...'
-        for label in Point.label_dict:
+        for label in range(len(Point.label_dict)):
             #Separate the data into positive and negative classes
             trainY = self.trainY.copy()
             if not(self.classifier_class == binaryWinnow):
-                trainY[trainY != Point.label_dict[label]] = -1
-                trainY[trainY != -1] = 1
+                trainY[trainY != label] = -1
+                trainY[trainY != 0] = 1
             else:
-                trainY[trainY != Point.label_dict[label]] = 0
+                trainY[trainY != label] = 0
                 trainY[trainY != 0] = 1
 
             #Train the classifier
             classifier = self.classifier_class(self.trainX, trainY, self.classifier_params)
             classifier.train()
             self.classifiers.append(classifier)
-            print '[OneVsAll] Trained ', label
+            print '[OneVsAll] Trained ', Point.label_rev_dict[label]
         print '[OneVsAll] Done!'
         
     def predict(self, dataX):
         #Check if sane data point
         assert(dataX.shape == self.trainX[0].shape)
         predicted_confidences = [classifier.predict(dataX) for classifier in self.classifiers]
-        classifier_index = predicted_confidences.index(max(predicted_confidences))
-        return classifier_index
+        best_classifier = predicted_confidences.index(max(predicted_confidences))
+        return best_classifier
     
     def test(self):
         evals = []
+        true_labels = []
+        predicted_labels = []
         for index in range(len(self.testX)):
             dataX = self.testX[index]
             true_label = self.testY[index]
-            classifier_index = self.predict(dataX)
-            evals.append(self.classifiers[classifier_index].test(dataX, true_label))
+            predicted_label = self.predict(dataX)
+            evals.append(self.classifiers[predicted_label].test(dataX, true_label)) 
+            true_labels.append(true_label)
+            predicted_labels.append(predicted_label)
         #Now evaluate accuracy
         #True == 1, thus sum
         print '[OneVsAll] Accuracy = ', float(sum(evals))/len(evals)
+        #Generate confusion matrix
+        labels = [Point.label_rev_dict[i] for i in range(len(Point.label_dict))]
+        
+        cm =  confusion_matrix(true_labels, predicted_labels )
+        fig = plt.figure()
+        ax = fig.add_subplot(111)
+        cax = ax.matshow(cm)
+        plt.title('Confusion matrix of the classifier')
+        fig.colorbar(cax)
+        ax.set_xticklabels([''] + labels)
+        ax.set_yticklabels([''] + labels)
+        plt.xlabel('Predicted')
+        plt.ylabel('True')
+        for x in xrange(len(cm)):
+            for y in xrange(len(cm)):
+                ax.annotate(str(cm[x][y]), xy=(y, x), 
+                            horizontalalignment='center',
+                            verticalalignment='center')
+        plt.show()
+        
+        return predicted_labels
         
         
 if __name__ == "__main__":
     #Sample implementation for a Bayes Linear Classifier
     #Load a log
-    train_log_object = LogReader('../data/oakland_part3_am_rf.node_features')
+    train_log_object = LogReader('../data/oakland_part3_an_rf.node_features')
     train_points = train_log_object.read()
-    train_binary_features = np.load('am_binary_features2.npy')
-    test_log_object = LogReader('../data/oakland_part3_an_rf.node_features')
+    train_binary_features = np.load('an_binary_features2.npy')
+    feat_threshold =  np.load('an_binary_threshold2.npy')
+    test_log_object = LogReader('../data/oakland_part3_am_rf.node_features')
     test_points = test_log_object.read()
-    feat_threshold =  np.load('am_binary_threshold2.npy')
     test_binary_features = threshold_to_binary(np.array([point._feature for point in test_points]),feat_threshold)
 
     bl_params = [0.2, 0.0, 1.0]
     
 #     orchestrator = OneVsAll([point._feature for point in train_points], [point._label for point in train_points], BLRegression)
+
     orchestrator = OneVsAll(train_binary_features, [point._label for point in train_points],
                             binaryWinnow, bl_params,
                             test_binary_features, [point._label for point in test_points])
+#     orchestrator = OneVsAll([point._feature for point in train_points], [point._label for point in train_points],
+#                             BLRegression, bl_params,
+#                             [point._feature for point in test_points], [point._label for point in test_points])
+#     orchestrator.train()
+#     orchestrator.test()
+    
+    #print 'And now Linear Kernel SVM'
+    #svm_params = [0.4, 'linear', 0.01]
+    #orchestrator = OneVsAll([point._feature for point in train_points], [point._label for point in train_points],
+    #                        OKSVM, svm_params,
+    #                        [point._feature for point in test_points], [point._label for point in test_points])
     orchestrator.train()
-    orchestrator.test()
+    predicted_labels = orchestrator.test()
+    plot_points.plot_predicted_labels(test_points, predicted_labels)

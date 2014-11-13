@@ -40,17 +40,18 @@ class binaryWinnow:
         #Initialize all the weights to 1
         self.weights = np.ones([self.num_features, 1])
         # Track number of mistakes
-        err_num = np.zeros([self.num_classes,1])
+        err_num = 0
 
         for index in range(self.trainX.shape[0]):
             predicted_label = np.dot(self.trainX[index,:], self.weights) >= self.thresh
             if not(predicted_label == self.trainY[index]):
-                err_num[self.trainY[index]] += 1
+                err_num += 1
                 #print "predicted", predicted_label
                 self.update_weights(predicted_label, index)
 
         print "[BinaryWinnow] Number of mistakes at learning: ", err_num
         print "[BinaryWinnow] Learned weights \n",self.weights
+
     def predict(self, data_pt):
 
         return np.dot(data_pt, self.weights)
