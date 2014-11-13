@@ -65,9 +65,9 @@ class OneVsAll:
             (trainX,trainY) = correct_imbalance(trainX,trainY)
             trainY[trainY == 0] = -1
             trainY[trainY == 1] = 1
-            print 'shapes::',trainY[trainY==-1].shape, trainY[trainY==1].shape
+            #print 'shapes::',trainY[trainY==-1].shape, trainY[trainY==1].shape
             trainY = trainY[:,0]
-            print trainY.shape, trainX.shape
+            #print trainY.shape, trainX.shape
             #Train the classifier
             classifier = self.classifier_class(trainX, trainY, self.classifier_params)
             classifier.train()
@@ -149,6 +149,7 @@ class OneVsAll:
 #         labels = [Point.label_rev_dict[i] for i in [0,3]]
 
         cm =  confusion_matrix(true_labels, predicted_labels )
+
         pdb.set_trace()
         cm = cm /np.sum(cm, axis =1)
         print "confusion matrix"
@@ -170,6 +171,7 @@ class OneVsAll:
 #                             verticalalignment='center')
 #         plt.show()
 
+
         return predicted_labels,cm,acc
 
 def correct_imbalance(Xs,Ys):
@@ -177,24 +179,20 @@ def correct_imbalance(Xs,Ys):
     h = np.bincount(Ys)
     d = np.std(h[0])
     mode = np.max(h)
-    print "most numerous class is ", np.argmax(h), " it has ", mode, " points"
+    #print "most numerous class is ", np.argmax(h), " it has ", mode, " points"
     newXs = Xs.copy()
     newYs = Ys.copy()
     newYs.shape = (Xs.shape[0],1)
     golden_ratio = 0.2
-    print "h", h
     for i in range(len(class_id)):
-        print "i: ",i
         ratio_to_mode = h[i]/float(mode)
         if ratio_to_mode <golden_ratio:
-            print "adding ",int((golden_ratio - ratio_to_mode)*mode)," points to class",i
+            #print "adding ",int((golden_ratio - ratio_to_mode)*mode)," points to class",i
             index = np.where(Ys==i)
             tmp_index = np.random.random_integers(0,len(index),int((golden_ratio - ratio_to_mode)*mode))
             newXs = np.vstack((newXs,Xs[index[0][tmp_index],:]))
 
             tmp = i*np.ones([int((golden_ratio - ratio_to_mode)*mode),1])
-            print newYs.shape,tmp.shape
-
             newYs = np.vstack((newYs, tmp))
     #And shuffle!
     shuffled_indices = range(len(newYs))
@@ -238,7 +236,7 @@ if __name__ == "__main__":
     #orchestrator = OneVsAll(train_binary_features, [point._label for point in train_points],
     #                        binaryWinnow, bl_params,
     #                        test_binary_features, [point._label for point in test_points])
-#     orchestrator = OneVsAll(X[train_idx,:], Y[train_idx],binaryWinnowvar, [10,0.01],testXs, testYs)
+    orchestrator = OneVsAll(trainXs, trainYs,binaryWinnowvar, [10,0.01],testXs, testYs)
     #orchestrator = OneVsAll(trainXs, trainYs,BLRegression, bl_params,testXs, testYs)
     #orchestrator = OneVsAll(train_binary_features, [point._label for point in train_points],
     #                         binaryWinnow, [10,0.01],
@@ -247,11 +245,11 @@ if __name__ == "__main__":
 #     orchestrator.test()
 
 
-    print 'And now Linear Kernel SVM'
-    svm_params = [0.004, 'linear', 0.01]
-    orchestrator = OneVsAll(trainXs, trainYs,
-                             OKSVM, svm_params,
-                             testXs, testYs)
+    #print 'And now Linear Kernel SVM'
+    #svm_params = [0.004, 'linear', 0.01]
+    #orchestrator = OneVsAll(trainXs, trainYs,
+    #                         OKSVM, svm_params,
+    #                         testXs, testYs)
 
     orchestrator.train()
     predicted_labels = orchestrator.test()
