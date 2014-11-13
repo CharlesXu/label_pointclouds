@@ -98,12 +98,16 @@ class OneVsAll:
             predicted_labels.append(predicted_label)
         #Now evaluate accuracy
         #True == 1, thus sum
-        print '[OneVsAll] Accuracy = ', float(sum(evals))/len(evals)
+        print '[OneVsAll] Accuracy is = ', float(sum(evals))/len(evals)
         #Generate confusion matrix
         labels = [Point.label_rev_dict[i] for i in range(len(Point.label_dict))]
 #         labels = [Point.label_rev_dict[i] for i in [0,3]]
         
+        
         cm =  confusion_matrix(true_labels, predicted_labels )
+        pdb.set_trace()
+        cm = cm*1.0/np.sum(cm, axis = 1)
+        print cm
         fig = plt.figure()
         ax = fig.add_subplot(111)
         cax = ax.matshow(cm)
@@ -113,11 +117,11 @@ class OneVsAll:
         ax.set_yticklabels([''] + labels)
         plt.xlabel('Predicted')
         plt.ylabel('True')
-        for x in xrange(len(cm)):
-            for y in xrange(len(cm)):
-                ax.annotate(str(cm[x][y]), xy=(y, x), 
-                            horizontalalignment='center',
-                            verticalalignment='center')
+#         for x in xrange(len(cm)):
+#             for y in xrange(len(cm)):
+#                 ax.annotate(str(cm[x][y]), xy=(y, x), 
+#                             horizontalalignment='center',
+#                             verticalalignment='center')
         plt.show()
         
         return predicted_labels
@@ -145,22 +149,26 @@ class OneVsAll:
 #         labels = [Point.label_rev_dict[i] for i in [0,3]]
 
         cm =  confusion_matrix(true_labels, predicted_labels )
-        print "confusion matrix, ",cm
-        #fig = plt.figure()
-        #ax = fig.add_subplot(111)
-        #cax = ax.matshow(cm)
-        #plt.title('Confusion matrix of the classifier')
-        #fig.colorbar(cax)
-        #ax.set_xticklabels([''] + labels)
-        #ax.set_yticklabels([''] + labels)
-        #plt.xlabel('Predicted')
-        #plt.ylabel('True')
-        #for x in xrange(len(cm)):
-        #    for y in xrange(len(cm)):
-        #        ax.annotate(str(cm[x][y]), xy=(y, x),
-        #                    horizontalalignment='center',
-        #                    verticalalignment='center')
-        #plt.show()
+        pdb.set_trace()
+        cm = cm /np.sum(cm, axis =1)
+        print "confusion matrix"
+        print cm
+#         pdb.set_trace()
+#         fig = plt.figure()
+#         ax = fig.add_subplot(111)
+#         cax = ax.matshow(cm)
+#         plt.title('Confusion matrix of the classifier')
+#         fig.colorbar(cax)
+#         ax.set_xticklabels([''] + labels)
+#         ax.set_yticklabels([''] + labels)
+#         plt.xlabel('Predicted')
+#         plt.ylabel('True')
+#         for x in xrange(len(cm)):
+#             for y in xrange(len(cm)):
+#                 ax.annotate(str(cm[x][y]), xy=(y, x),
+#                             horizontalalignment='center',
+#                             verticalalignment='center')
+#         plt.show()
 
         return predicted_labels,cm,acc
 
@@ -200,11 +208,11 @@ def correct_imbalance(Xs,Ys):
 if __name__ == "__main__":
     #Sample implementation for a Bayes Linear Classifier
     #Load a log
-    train_log_object = LogReader('../data/oakland_part3_am_rf.node_features')
+    train_log_object = LogReader('../data/oakland_part3_an_rf.node_features')
     train_points = train_log_object.read()
     train_binary_features = np.load('an_binary_features2.npy')
     feat_threshold =  np.load('an_binary_threshold2.npy')
-    test_log_object = LogReader('../data/oakland_part3_an_rf.node_features')
+    test_log_object = LogReader('../data/oakland_part3_am_rf.node_features')
     test_points = test_log_object.read()
     test_binary_features = threshold_to_binary(np.array([point._feature for point in test_points]),feat_threshold)
 
