@@ -13,6 +13,7 @@ from LogReader import LogReader
 from BLRegression import BLRegression
 from binaryWinnow import binaryWinnow
 from binaryWinnow import threshold_to_binary
+from binaryWinnowvar import binaryWinnowvar
 from sklearn.metrics import confusion_matrix
 import matplotlib.pyplot as plt
 import pdb
@@ -52,7 +53,7 @@ class OneVsAll:
             trainY = self.trainY.copy()
             if not(self.classifier_class == binaryWinnow):
                 trainY[trainY != label] = -1
-                trainY[trainY != 0] = 1
+                trainY[trainY != -1] = 1
             else:
                 trainY[trainY != label] = 0
                 trainY[trainY != 0] = 1
@@ -123,12 +124,12 @@ if __name__ == "__main__":
     
 #     orchestrator = OneVsAll([point._feature for point in train_points], [point._label for point in train_points], BLRegression)
 
-    orchestrator = OneVsAll(train_binary_features, [point._label for point in train_points],
-                            binaryWinnow, bl_params,
-                            test_binary_features, [point._label for point in test_points])
-#     orchestrator = OneVsAll([point._feature for point in train_points], [point._label for point in train_points],
-#                             BLRegression, bl_params,
-#                             [point._feature for point in test_points], [point._label for point in test_points])
+    #orchestrator = OneVsAll(train_binary_features, [point._label for point in train_points],
+    #                        binaryWinnow, bl_params,
+    #                        test_binary_features, [point._label for point in test_points])
+    orchestrator = OneVsAll([point._feature for point in train_points], [point._label for point in train_points],
+                             binaryWinnowvar, [10,0.01],
+                             [point._feature for point in test_points], [point._label for point in test_points])
 #     orchestrator.train()
 #     orchestrator.test()
     
