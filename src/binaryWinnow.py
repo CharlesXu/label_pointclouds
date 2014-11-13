@@ -8,16 +8,16 @@ from scipy.linalg.basic import inv
 from LogReader import LogReader
 
 
-class MCWinnow:
+class binaryWinnow:
 
-    def __init__(self, features, classes):
+    def __init__(self, features, classes,params):
         # Assert that features are binary
         assert(np.array_equal(np.unique(features),np.array([0,1])))
         self.trainX = features
         self.trainY = classes
         self.class_names = np.unique(classes)
         self.num_features = self.trainX.shape[1]
-        self.num_classes = len(self.class_names)
+        self.num_classes = 2
 
 
 
@@ -28,59 +28,48 @@ class MCWinnow:
 
     def print_info(self):
 
-        print "[MulticlassWinnow] Number of observations: ", self.trainY.shape[0]
-        print "[MulticlassWinnow] Number of features: ", self.num_features
-        print "[MulticlassWinnow] Number of classes: ", self.num_classes
-        print "[MulticlassWinnow] Promotion parameter: ", self.p
-        print "[MulticlassWinnow] Demotion parameter: ", self.d
+        print "[BinaryWinnow] Number of observations: ", self.trainY.shape[0]
+        print "[BinaryWinnow] Number of features: ", self.num_features
+        print "[BinaryWinnow] Number of classes: ", self.num_classes
+        print "[BinaryWinnow] Promotion parameter: ", self.p
+        print "[BinaryWinnow] Demotion parameter: ", self.d
         # add function to print info
 
     def train(self):
 
         #Initialize all the weights to 1
-        self.weights = np.ones([self.num_features, self.num_classes])
+        self.weights = np.ones([self.num_features, 1])
         # Track number of mistakes
         err_num = np.zeros([self.num_classes,1])
 
         for index in range(self.trainX.shape[0]):
-            (predicted_label,scores) = self.predict(self.trainX[index,:])
+            predicted_label = np.dot(self.trainX[index,:], self.weights) >= self.thresh
             if not(predicted_label == self.trainY[index]):
                 err_num[self.trainY[index]] += 1
                 #print "predicted", predicted_label
-                self.update_weights(scores, index)
+                self.update_weights(predicted_label, index)
 
-        print "[MulticlassWinnow] Number of mistakes at learning: ", err_num
-
+        print "[BinaryWinnow] Number of mistakes at learning: ", err_num
+        print "[BinaryWinnow] Learned weights \n",self.weights
     def predict(self, data_pt):
-        score = np.zeros([self.num_classes, 1])
-        # for every class
-        for i in range(self.num_classes):
-            # compute dot product
-            score[i] = np.dot(data_pt, self.weights[:,i])
 
-        return np.argmax(score), score
+        return np.dot(data_pt, self.weights)
 
-    def update_weights(self,score,index):
+    def update_weights(self,predicted_label,index):
         # for the wrongly labeled class, find the features ==1, and demote or promote their weights depending on type
         # of misclassification
-        true_label = self.trainY[index]
-        which_indices = np.where(self.trainX[index,:] == 1)
 
-        #self.weights[which_indices,predicted_label] *= self.d
+        which_indices = np.where(self.trainX[index, :] == 1)
 
-        #self.weights[which_indices,true_label] *= self.p
-        for i in range(self.num_classes):
-            if score[i]>= self.thresh and not(true_label==i):
-                #print index," down ",i,true_label,score[i],self.trainX[index,:]*self.weights[:,i]
-                self.weights[which_indices,i] *= self.d
-            elif score[i]< self.thresh and (true_label==i):
-                #print index," up ",i,true_label,score[i],self.trainX[index,:]*self.weights[:,i]
-                self.weights[which_indices,i] *= self.p
+        if predicted_label ==1:
+            self.weights[which_indices] *= self.d
+        else:
+            self.weights[which_indices] *= self.p
+
 
     def test(self, data_pt,true_label):
 
-        (predicted_label,tmp) = self.predict(data_pt)
-        if predicted_label == true_label:
+        if self.predict(data_pt)>self.thresh:
             return True
         else:
             return False
@@ -155,39 +144,33 @@ def threshold_to_binary(features,feat_threshold):
 
 if __name__ == "__main__":
 
-    train_log_object = LogReader('../data/oakland_part3_an_rf.node_features')
-    binary_features = np.load('an_binary_features2.npy')
-    feat_threshold =  np.load('an_binary_threshold2.npy')
-    test_log_object = LogReader('../data/oakland_part3_am_rf.node_features')
+    train_log_object = LogReader('../data/oakland_part3_am_rf.node_features')
+    binary_features = np.load('am_binary_features2.npy')
+    feat_threshold =  np.load('am_binary_threshold2.npy')
 
     train_points = train_log_object.read()
 
     Xs = np.array([point._feature for point in train_points])
     Ys = np.array([point._label for point in train_points])
-    #(binary_features,feat_threshold) = convert_to_binary(Xs,Ys)
-    #np.save('am_binary_features2', binary_features)
-    #np.save('am_binary_threshold2', feat_threshold)
-    #binary_features = threshold_to_binary(Xs,feat_threshold)
-    #train_index = np.random.randint(0,Xs.shape[0],10)
-    train_index =   np.random.permutation(Xs.shape[0]) # range(Xs.shape[0])
-    test_regression = MCWinnow(binary_features[train_index, :], Ys[train_index])
+
+    Ys[np.where(Ys==3)] = 1
+    Ys[np.where(Ys != 3)]=0
+    train_index =  range(Xs.shape[0]) #np.random.permutation(Xs.shape[0]) #
+    test_regression = binaryWinnow(binary_features[train_index, :], Ys[train_index])
     test_regression.train()
     print "[MultiClassWinnow] Learned weights \n", test_regression.weights
+    test_log_object = LogReader('../data/oakland_part3_an_rf.node_features')
     test_points = test_log_object.read()
     testXs = np.array([point._feature for point in test_points])
     testYs = np.array([point._label for point in test_points])
-
+    testYs[np.where(testYs==3)] = 1
+    testYs[np.where(testYs!=3)]=0
     n = testYs.shape[0]
     binary_test_features = threshold_to_binary(testXs,feat_threshold)
-    confusion_matrix = np.zeros([test_regression.num_classes, test_regression.num_classes],dtype=int)
-    test_err =0
+    test_err = np.zeros([test_regression.num_classes, 1])
     for index in range(n):
-        (predicted_label, tmp) = test_regression.predict(binary_test_features[index,:])
+        predicted_label = test_regression.predict(binary_test_features[index,:])
         if not(predicted_label == testYs[index]):
             #print predicted_label,testYs[index]
-            confusion_matrix[testYs[index],predicted_label] += 1
-            test_err +=1
-        else:
-            confusion_matrix[testYs[index],testYs[index]] +=1
-    print "confusion matrix \n", confusion_matrix
-    print "percent accuracy", 100*(1-test_err/float(n))
+            test_err[testYs[index]] += 1
+    print "Number of mistakes at testing ", test_err

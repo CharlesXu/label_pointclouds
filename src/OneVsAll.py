@@ -11,6 +11,8 @@ import numpy as np
 from Point import Point
 from LogReader import LogReader
 from BLRegression import BLRegression
+from binaryWinnow import binaryWinnow
+from binaryWinnow import threshold_to_binary
 
 class OneVsAll:
     def __init__(self, features, labels, classifier_class, classifier_params, test_features = None, test_labels = None):
@@ -43,9 +45,13 @@ class OneVsAll:
         for label in Point.label_dict:
             #Separate the data into positive and negative classes
             trainY = self.trainY.copy()
-            trainY[trainY != Point.label_dict[label]] = -1
-            trainY[trainY != -1] = 1
-            
+            if not(self.classifier_class == binaryWinnow):
+                trainY[trainY != Point.label_dict[label]] = -1
+                trainY[trainY != -1] = 1
+            else:
+                trainY[trainY != Point.label_dict[label]] = 0
+                trainY[trainY != 0] = 1
+
             #Train the classifier
             classifier = self.classifier_class(self.trainX, trainY, self.classifier_params)
             classifier.train()
@@ -77,14 +83,17 @@ if __name__ == "__main__":
     #Load a log
     train_log_object = LogReader('../data/oakland_part3_am_rf.node_features')
     train_points = train_log_object.read()
+    train_binary_features = np.load('am_binary_features2.npy')
     test_log_object = LogReader('../data/oakland_part3_an_rf.node_features')
     test_points = test_log_object.read()
-    
+    feat_threshold =  np.load('am_binary_threshold2.npy')
+    test_binary_features = threshold_to_binary(np.array([point._feature for point in test_points]),feat_threshold)
+
     bl_params = [0.2, 0.0, 1.0]
     
 #     orchestrator = OneVsAll([point._feature for point in train_points], [point._label for point in train_points], BLRegression)
-    orchestrator = OneVsAll([point.add_corrupted_features(1) for point in train_points], [point._label for point in train_points], 
-                            BLRegression, bl_params,
-                            [point.add_corrupted_features(1) for point in test_points], [point._label for point in test_points])
+    orchestrator = OneVsAll(train_binary_features, [point._label for point in train_points],
+                            binaryWinnow, bl_params,
+                            test_binary_features, [point._label for point in test_points])
     orchestrator.train()
     orchestrator.test()
