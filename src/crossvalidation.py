@@ -104,12 +104,13 @@ if __name__ == "__main__":
     cm = np.zeros([cv_fold,cv_fold,5,5])
     acc = np.zeros([cv_fold,cv_fold])
     params = [[5,0.01],[10,0.01],[15,0.01]]#,[5,0.001],[10,0.001],[15,0.001],[5,0.1],[10,0.1],[15,0.1]]
-    cum_cm = np.zeros([3,cv_fold,5,5])
+    cum_cm = np.zeros([cv_fold,5,5])
     mean_confusion_matrix = np.zeros([3,5,5])
     mean_accuracy = np.zeros([3,1])
     for p in range(3):
         param = params[p]
-
+        acc = np.zeros([cv_fold,cv_fold])
+        cm = np.zeros([cv_fold,5,5])
         for i in range(cv_fold):
             print "training fold ",i+1," and testing on the others"
             idx_train = cv_idx_train(ds_train.r, cv_fold, i + 1)
@@ -118,9 +119,13 @@ if __name__ == "__main__":
             for j in range(cv_fold):
                 print "j: ",j
                 idx_test = cv_idx_test(ds_train.r, cv_fold, j + 1)
-                (predicted_labels,cm,acc) = orchestrator.cvtest(X[perm_idx[idx_test],:],Y[perm_idx[idx_test]])
-        ######### STILL TO LOG the mean accuracy etc,... to be able to pick the best params
+                (predicted_labels,cm[j,:,:],acc[i,j]) = orchestrator.cvtest(X[perm_idx[idx_test],:],Y[perm_idx[idx_test]])
+            cum_cm[i,:,:] = np.mean(cm,axis=0)
+        mean_confusion_matrix = np.mean(cum_cm,axis=0)
+        mean_accuracy = np.mean(acc)
 
+        print "confusion for param ",p," \n ", mean_confusion_matrix
+        print "accuracy for param ",p," : ",mean_accuracy
 
 
 
