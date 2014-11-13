@@ -155,16 +155,15 @@ def threshold_to_binary(features,feat_threshold):
 
 if __name__ == "__main__":
 
-    train_log_object = LogReader('../data/oakland_part3_am_rf.node_features')
-    binary_features = np.load('am_binary_features2.npy')
-    feat_threshold =  np.load('am_binary_threshold2.npy')
-    test_log_object = LogReader('../data/oakland_part3_an_rf.node_features')
+    train_log_object = LogReader('../data/oakland_part3_an_rf.node_features')
+    binary_features = np.load('an_binary_features2.npy')
+    feat_threshold =  np.load('an_binary_threshold2.npy')
+    test_log_object = LogReader('../data/oakland_part3_am_rf.node_features')
 
     train_points = train_log_object.read()
 
     Xs = np.array([point._feature for point in train_points])
     Ys = np.array([point._label for point in train_points])
-
     #(binary_features,feat_threshold) = convert_to_binary(Xs,Ys)
     #np.save('am_binary_features2', binary_features)
     #np.save('am_binary_threshold2', feat_threshold)
@@ -180,10 +179,15 @@ if __name__ == "__main__":
 
     n = testYs.shape[0]
     binary_test_features = threshold_to_binary(testXs,feat_threshold)
-    test_err = np.zeros([test_regression.num_classes, 1])
+    confusion_matrix = np.zeros([test_regression.num_classes, test_regression.num_classes],dtype=int)
+    test_err =0
     for index in range(n):
         (predicted_label, tmp) = test_regression.predict(binary_test_features[index,:])
         if not(predicted_label == testYs[index]):
             #print predicted_label,testYs[index]
-            test_err[testYs[index]] += 1
-    print "percent accuracy ", 100*(1-np.sum(test_err)/float(n))
+            confusion_matrix[testYs[index],predicted_label] += 1
+            test_err +=1
+        else:
+            confusion_matrix[testYs[index],testYs[index]] +=1
+    print "confusion matrix \n", confusion_matrix
+    print "percent accuracy", 100*(1-test_err/float(n))
