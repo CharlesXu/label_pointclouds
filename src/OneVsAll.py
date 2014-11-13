@@ -49,18 +49,27 @@ class OneVsAll:
     def train(self):
         print '[OneVsAll] Training individual predictors...'
         for label in range(len(Point.label_dict)):
+#         for label in [0,3]:
             #Separate the data into positive and negative classes
             trainY = self.trainY.copy()
+            trainX = self.trainX.copy()
             if not(self.classifier_class == binaryWinnow):
                 trainY[trainY != label] = -1
                 trainY[trainY != -1] = 1
+                trainY[trainY == -1] = 0
             else:
                 trainY[trainY != label] = 10
                 trainY[trainY != 10] = 1
                 trainY[trainY != label] = 0
-
+            #Rebalance the data
+            (trainX,trainY) = correct_imbalance(trainX,trainY)
+            trainY[trainY == 0] = -1
+            trainY[trainY == 1] = 1
+            print 'shapes::',trainY[trainY==-1].shape, trainY[trainY==1].shape
+            trainY = trainY[:,0]
+            print trainY.shape, trainX.shape
             #Train the classifier
-            classifier = self.classifier_class(self.trainX, trainY, self.classifier_params)
+            classifier = self.classifier_class(trainX, trainY, self.classifier_params)
             classifier.train()
             self.classifiers.append([classifier, label])
             print '[OneVsAll] Trained ', Point.label_rev_dict[label]
@@ -123,18 +132,24 @@ def correct_imbalance(Xs,Ys):
     newXs = Xs.copy()
     newYs = Ys.copy()
     newYs.shape = (Xs.shape[0],1)
+    golden_ratio = 0.2
     print "h", h
     for i in range(len(class_id)):
         print "i: ",i
         ratio_to_mode = h[i]/float(mode)
-        if ratio_to_mode < 0.8:
-            print "adding ",int((0.8 - ratio_to_mode)*mode)," points to class",i
+        if ratio_to_mode <golden_ratio:
+            print "adding ",int((golden_ratio - ratio_to_mode)*mode)," points to class",i
             index = np.where(Ys==i)
-            tmp_index = np.random.random_integers(0,len(index),int((0.8 - ratio_to_mode)*mode))
+            tmp_index = np.random.random_integers(0,len(index),int((golden_ratio - ratio_to_mode)*mode))
             newXs = np.vstack((newXs,Xs[index[0][tmp_index],:]))
-            tmp = i*np.ones([int((0.8 - ratio_to_mode)*mode),1])
+            tmp = i*np.ones([int((golden_ratio - ratio_to_mode)*mode),1])
             print newYs.shape,tmp.shape
             newYs = np.vstack((newYs, tmp))
+    #And shuffle!
+    shuffled_indices = range(len(newYs))
+    np.random.shuffle(shuffled_indices)
+    newXs = newXs[shuffled_indices, :]
+    newYs = newYs[shuffled_indices, :]
     return (newXs,newYs)
 
 
@@ -157,15 +172,16 @@ if __name__ == "__main__":
     testXs = np.array([point._feature for point in test_points])
     testYs = np.array([point._label for point in test_points])
 
-    #(X,Y) = correct_imbalance(trainXs,trainYs)
+#     (X,Y) = correct_imbalance(trainXs,trainYs)
+    
 #     orchestrator = OneVsAll([point._feature for point in train_points], [point._label for point in train_points], BLRegression)
 
 #     orchestrator = OneVsAll(train_binary_features, [point._label for point in train_points],
 #                             binaryWinnow, bl_params,
 #                             test_binary_features, [point._label for point in test_points])
-    #orchestrator = OneVsAll([point._feature for point in train_points], [point._label for point in train_points],
-    #                        BLRegression, bl_params,
-    #                        [point._feature for point in test_points], [point._label for point in test_points])
+#     orchestrator = OneVsAll([point._feature for point in train_points], [point._label for point in train_points],
+#                             BLRegression, bl_params,
+#                             [point._feature for point in test_points], [point._label for point in test_points])
     #orchestrator = OneVsAll(train_binary_features, [point._label for point in train_points],
     #                        binaryWinnow, bl_params,
     #                        test_binary_features, [point._label for point in test_points])
@@ -178,11 +194,11 @@ if __name__ == "__main__":
 #     orchestrator.test()
 
 
-   # print 'And now Linear Kernel SVM'
-#     svm_params = [0.4, 'linear', 0.01]
-#     orchestrator = OneVsAll([point._feature for point in train_points], [point._label for point in train_points],
-#                             OKSVM, svm_params,
-#                             [point._feature for point in test_points], [point._label for point in test_points])
-    #orchestrator.train()
-    #predicted_labels = orchestrator.test()
-    #plot_points.plot_predicted_labels(test_points, predicted_labels)
+    print 'And now Linear Kernel SVM'
+    svm_params = [0.004, 'linear', 0.01]
+    orchestrator = OneVsAll(trainXs, trainYs,
+                             OKSVM, svm_params,
+                             testXs, testYs)
+    orchestrator.train()
+    predicted_labels = orchestrator.test()
+    plot_points.plot_predicted_labels(test_points, predicted_labels)

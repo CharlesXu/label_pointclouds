@@ -26,7 +26,7 @@ def plot_predicted_labels(points, labels):
 if __name__ == "__main__":
     
     #Load a log
-    log_object = LogReader('../data/oakland_part3_an_rf.node_features')
+    log_object = LogReader('../data/oakland_part3_am_rf.node_features')
     points = log_object.read()
     
     plot_points(points)
