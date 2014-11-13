@@ -230,7 +230,7 @@ if __name__ == "__main__":
     #orchestrator = OneVsAll(train_binary_features, [point._label for point in train_points],
     #                        binaryWinnow, bl_params,
     #                        test_binary_features, [point._label for point in test_points])
-    orchestrator = OneVsAll(X[train_idx,:], Y[train_idx],binaryWinnowvar, [10,0.01],testXs, testYs)
+#     orchestrator = OneVsAll(X[train_idx,:], Y[train_idx],binaryWinnowvar, [10,0.01],testXs, testYs)
     #orchestrator = OneVsAll(trainXs, trainYs,BLRegression, bl_params,testXs, testYs)
     #orchestrator = OneVsAll(train_binary_features, [point._label for point in train_points],
     #                         binaryWinnow, [10,0.01],
