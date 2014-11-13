@@ -3,14 +3,14 @@ import numpy as np
 from Point import Point
 from LogReader import LogReader
 from BLRegression import BLRegression
-from binaryWinnow import binaryWinnow
-from binaryWinnow import threshold_to_binary
+from binaryWinnowvar import binaryWinnowvar
 from sklearn.metrics import confusion_matrix
 import matplotlib.pyplot as plt
 import pdb
 from OnlineKernelSVM import OKSVM
 import plot_points
 from OneVsAll import OneVsAll
+from OneVsAll import correct_imbalance
 
 class Dataset:
     def __init__(self, X=[], y=[]):
@@ -91,25 +91,36 @@ if __name__ == "__main__":
 
     train_log_object = LogReader('../data/oakland_part3_an_rf.node_features')
     train_points = train_log_object.read()
-    train_binary_features = np.load('an_binary_features2.npy')
-    feat_threshold =  np.load('an_binary_threshold2.npy')
     test_log_object = LogReader('../data/oakland_part3_am_rf.node_features')
     test_points = test_log_object.read()
-    test_binary_features = threshold_to_binary(np.array([point._feature for point in test_points]),feat_threshold)
 
-    Xs = np.array([point._feature for point in train_points])
-    Ys = np.array([point._label for point in train_points])
-    ds_train = Dataset(Xs,Ys)
+    trainXs = np.array([point._feature for point in train_points])
+    trainYs = np.array([point._label for point in train_points])
+    (X,Y) = correct_imbalance(trainXs,trainYs)
+
+    perm_idx = np.random.permutation(X.shape[0]) #range(X.shape[0])
+    ds_train = Dataset(X[perm_idx,:],Y[perm_idx])
     cv_fold = 2
-    for i in range(cv_fold):
-        print "training fold ",i+1," and testing on the others"
-        idx_train = cv_idx_train(ds_train.r, cv_fold, i + 1)
-        idx_test = cv_idx_test(ds_train.r, cv_fold, i + 1)
-        bl_params = [0.2, 0.0, 1.0]
-        orchestrator = OneVsAll(Xs[idx_train,:], Ys[idx_train],
-                             BLRegression, bl_params,Xs[idx_test,:], Ys[idx_test])
-        orchestrator.train()
-        orchestrator.test()
+    cm = np.zeros([cv_fold,cv_fold,5,5])
+    acc = np.zeros([cv_fold,cv_fold])
+    params = [[5,0.01],[10,0.01],[15,0.01]]#,[5,0.001],[10,0.001],[15,0.001],[5,0.1],[10,0.1],[15,0.1]]
+    cum_cm = np.zeros([3,cv_fold,5,5])
+    mean_confusion_matrix = np.zeros([3,5,5])
+    mean_accuracy = np.zeros([3,1])
+    for p in range(3):
+        param = params[p]
+
+        for i in range(cv_fold):
+            print "training fold ",i+1," and testing on the others"
+            idx_train = cv_idx_train(ds_train.r, cv_fold, i + 1)
+            orchestrator = OneVsAll(X[perm_idx[idx_train],:], Y[perm_idx[idx_train]],binaryWinnowvar, param,[], [])
+            orchestrator.train()
+            for j in range(cv_fold):
+                print "j: ",j
+                idx_test = cv_idx_test(ds_train.r, cv_fold, j + 1)
+                (predicted_labels,cm,acc) = orchestrator.cvtest(X[perm_idx[idx_test],:],Y[perm_idx[idx_test]])
+        ######### STILL TO LOG the mean accuracy etc,... to be able to pick the best params
+
 
 
 
