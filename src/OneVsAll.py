@@ -55,8 +55,9 @@ class OneVsAll:
                 trainY[trainY != label] = -1
                 trainY[trainY != -1] = 1
             else:
+                trainY[trainY != label] = 10
+                trainY[trainY != 10] = 1
                 trainY[trainY != label] = 0
-                trainY[trainY != 0] = 1
 
             #Train the classifier
             classifier = self.classifier_class(self.trainX, trainY, self.classifier_params)
@@ -121,15 +122,22 @@ if __name__ == "__main__":
     test_binary_features = threshold_to_binary(np.array([point._feature for point in test_points]),feat_threshold)
 
     bl_params = [0.2, 0.0, 1.0]
+
+    trainXs = np.array([point._feature for point in train_points])
+    trainYs = np.array([point._label for point in train_points])
+    testXs = np.array([point._feature for point in test_points])
+    testYs = np.array([point._label for point in test_points])
     
 #     orchestrator = OneVsAll([point._feature for point in train_points], [point._label for point in train_points], BLRegression)
 
     #orchestrator = OneVsAll(train_binary_features, [point._label for point in train_points],
     #                        binaryWinnow, bl_params,
     #                        test_binary_features, [point._label for point in test_points])
-    orchestrator = OneVsAll([point._feature for point in train_points], [point._label for point in train_points],
-                             binaryWinnowvar, [10,0.01],
-                             [point._feature for point in test_points], [point._label for point in test_points])
+    orchestrator = OneVsAll(trainXs, trainYs,binaryWinnowvar, [10,0.01],testXs, testYs)
+    #orchestrator = OneVsAll(trainXs, trainYs,BLRegression, bl_params,testXs, testYs)
+    #orchestrator = OneVsAll(train_binary_features, [point._label for point in train_points],
+    #                         binaryWinnow, [10,0.01],
+    #                         test_binary_features, [point._label for point in test_points])
 #     orchestrator.train()
 #     orchestrator.test()
     
