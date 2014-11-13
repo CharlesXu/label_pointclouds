@@ -53,9 +53,10 @@ class BLRegression:
     def predict(self, dataX):
         #Check if sane data point
         assert(dataX.shape == self.trainX[0].shape)
-        #@todo: Integrate over weights distribution for this data point, or just take the mean?
+        #@todo: Sample, or just take the mean?
         #Sample from the likelihood normal
-        return np.random.normal(np.dot(self.mean, dataX), self.observation_error_sigma) 
+        #return np.random.normal(np.dot(self.mean, dataX), self.observation_error_sigma)
+        return np.dot(self.mean, dataX) 
         
     def test(self, dataX, true_label):
         if self.predict(dataX)*true_label > 0:

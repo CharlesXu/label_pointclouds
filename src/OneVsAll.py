@@ -52,7 +52,7 @@ class OneVsAll:
             trainY = self.trainY.copy()
             if not(self.classifier_class == binaryWinnow):
                 trainY[trainY != label] = -1
-                trainY[trainY != 0] = 1
+                trainY[trainY != -1] = 10
             else:
                 trainY[trainY != label] = 0
                 trainY[trainY != 0] = 1
@@ -60,16 +60,16 @@ class OneVsAll:
             #Train the classifier
             classifier = self.classifier_class(self.trainX, trainY, self.classifier_params)
             classifier.train()
-            self.classifiers.append(classifier)
+            self.classifiers.append([classifier, label])
             print '[OneVsAll] Trained ', Point.label_rev_dict[label]
         print '[OneVsAll] Done!'
         
     def predict(self, dataX):
         #Check if sane data point
         assert(dataX.shape == self.trainX[0].shape)
-        predicted_confidences = [classifier.predict(dataX) for classifier in self.classifiers]
-        best_classifier = predicted_confidences.index(max(predicted_confidences))
-        return best_classifier
+        predicted_confidences = [classifier[0].predict(dataX) for classifier in self.classifiers]
+        best_classifier = np.argmax(np.abs(predicted_confidences))
+        return self.classifiers[best_classifier][1]
     
     def test(self):
         evals = []
@@ -78,8 +78,11 @@ class OneVsAll:
         for index in range(len(self.testX)):
             dataX = self.testX[index]
             true_label = self.testY[index]
+#             if true_label not in [0,3]:
+#                 continue
             predicted_label = self.predict(dataX)
-            evals.append(self.classifiers[predicted_label].test(dataX, true_label)) 
+#             evals.append(self.classifiers[predicted_label].test(dataX, true_label))
+            evals.append(predicted_label == true_label) 
             true_labels.append(true_label)
             predicted_labels.append(predicted_label)
         #Now evaluate accuracy
@@ -87,6 +90,7 @@ class OneVsAll:
         print '[OneVsAll] Accuracy = ', float(sum(evals))/len(evals)
         #Generate confusion matrix
         labels = [Point.label_rev_dict[i] for i in range(len(Point.label_dict))]
+#         labels = [Point.label_rev_dict[i] for i in [0,3]]
         
         cm =  confusion_matrix(true_labels, predicted_labels )
         fig = plt.figure()
@@ -111,11 +115,11 @@ class OneVsAll:
 if __name__ == "__main__":
     #Sample implementation for a Bayes Linear Classifier
     #Load a log
-    train_log_object = LogReader('../data/oakland_part3_an_rf.node_features')
+    train_log_object = LogReader('../data/oakland_part3_am_rf.node_features')
     train_points = train_log_object.read()
     train_binary_features = np.load('an_binary_features2.npy')
     feat_threshold =  np.load('an_binary_threshold2.npy')
-    test_log_object = LogReader('../data/oakland_part3_am_rf.node_features')
+    test_log_object = LogReader('../data/oakland_part3_an_rf.node_features')
     test_points = test_log_object.read()
     test_binary_features = threshold_to_binary(np.array([point._feature for point in test_points]),feat_threshold)
 
@@ -123,20 +127,20 @@ if __name__ == "__main__":
     
 #     orchestrator = OneVsAll([point._feature for point in train_points], [point._label for point in train_points], BLRegression)
 
-    orchestrator = OneVsAll(train_binary_features, [point._label for point in train_points],
-                            binaryWinnow, bl_params,
-                            test_binary_features, [point._label for point in test_points])
-#     orchestrator = OneVsAll([point._feature for point in train_points], [point._label for point in train_points],
-#                             BLRegression, bl_params,
-#                             [point._feature for point in test_points], [point._label for point in test_points])
+#     orchestrator = OneVsAll(train_binary_features, [point._label for point in train_points],
+#                             binaryWinnow, bl_params,
+#                             test_binary_features, [point._label for point in test_points])
+    orchestrator = OneVsAll([point._feature for point in train_points], [point._label for point in train_points],
+                            BLRegression, bl_params,
+                            [point._feature for point in test_points], [point._label for point in test_points])
 #     orchestrator.train()
 #     orchestrator.test()
     
-    #print 'And now Linear Kernel SVM'
-    #svm_params = [0.4, 'linear', 0.01]
-    #orchestrator = OneVsAll([point._feature for point in train_points], [point._label for point in train_points],
-    #                        OKSVM, svm_params,
-    #                        [point._feature for point in test_points], [point._label for point in test_points])
+    print 'And now Linear Kernel SVM'
+#     svm_params = [0.4, 'linear', 0.01]
+#     orchestrator = OneVsAll([point._feature for point in train_points], [point._label for point in train_points],
+#                             OKSVM, svm_params,
+#                             [point._feature for point in test_points], [point._label for point in test_points])
     orchestrator.train()
     predicted_labels = orchestrator.test()
     plot_points.plot_predicted_labels(test_points, predicted_labels)
