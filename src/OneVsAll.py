@@ -64,7 +64,10 @@ class OneVsAll:
             #Rebalance the data
             (trainX,trainY) = correct_imbalance(trainX,trainY)
             trainY[trainY == 0] = -1
-            trainY[trainY == 1] = 10
+            if self.classifier_class == BLRegression:
+                trainY[trainY == 1] = 10
+            else:
+                trainY[trainY == 1] = 1
             #print 'shapes::',trainY[trainY==-1].shape, trainY[trainY==1].shape
             trainY = trainY[:,0]
             #print trainY.shape, trainX.shape
