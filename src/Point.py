@@ -24,5 +24,5 @@ class Point:
     def add_corrupted_features(self, num_copies=1):
         a =np.array([])
         for i in range(num_copies):
-            a = np.append(a, np.random.multivariate_normal(self._feature, np.diag(np.ones(self._feature.shape[0]))) )
+            a = np.append(a, np.random.normal(self._feature, 0.1) )
         return a 

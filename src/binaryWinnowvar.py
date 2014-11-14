@@ -54,7 +54,7 @@ class binaryWinnowvar:
                 #print "predicted", predicted_label
                 self.update_weights(self.trainX[index,:],self.trainY[index])
 
-        print "[BinaryWinnow] Number of mistakes at learning: ", err_num
+#         print "[BinaryWinnow] Number of mistakes at learning: ", err_num
         #print "[BinaryWinnow] Learned weights \n",self.weights
 
     def predict(self, data_pt):

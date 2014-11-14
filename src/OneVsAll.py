@@ -76,8 +76,8 @@ class OneVsAll:
             classifier = self.classifier_class(trainX, trainY, self.classifier_params)
             classifier.train()
             self.classifiers.append([classifier, label])
-            print '[OneVsAll] Trained ', Point.label_rev_dict[label]
-        print '[OneVsAll] Done!'
+#             print '[OneVsAll] Trained ', Point.label_rev_dict[label]
+#         print '[OneVsAll] Done!'
         
     def predict(self, dataX):
         #Check if sane data point
@@ -135,8 +135,6 @@ class OneVsAll:
 #                             horizontalalignment='center',
 #                             verticalalignment='center')
         plt.show()
-        
-        
         return predicted_labels
 
     def cvtest(self,testX,testY):
@@ -155,7 +153,7 @@ class OneVsAll:
             predicted_labels.append(predicted_label)
         #Now evaluate accuracy
         #True == 1, thus sum
-        print '[OneVsAll] Accuracy = ', float(sum(evals))/len(evals)
+#         print '[OneVsAll] Accuracy = ', float(sum(evals))/len(evals)
         acc = float(sum(evals))/len(evals)
         #Generate confusion matrix
         labels = [Point.label_rev_dict[i] for i in range(len(Point.label_dict))]
@@ -170,9 +168,8 @@ class OneVsAll:
             fn = np.sum(cm[i,:]) - tp
             scores[i] = 2.0*tp/(2.0*tp+fp+fn)
         print scores
-        cm = cm /np.sum(cm, axis =1)
-        print "confusion matrix"
-        print cm
+#         print "confusion matrix"
+#         print cm
 #         pdb.set_trace()
 #         fig = plt.figure()
 #         ax = fig.add_subplot(111)
@@ -191,7 +188,7 @@ class OneVsAll:
 #         plt.show()
 
 
-        return predicted_labels,cm,acc,scores
+        return predicted_labels,cm,acc
 
 def correct_imbalance(Xs,Ys):
     class_id = np.unique(Ys)
@@ -235,9 +232,9 @@ if __name__ == "__main__":
 
     bl_params = [0.2, 0.0, 1.0]
 
-    trainXs = np.array([point.add_random_features(100) for point in train_points])
+    trainXs = np.array([point._feature for point in train_points])
     trainYs = np.array([point._label for point in train_points])
-    testXs = np.array([point.add_random_features(100) for point in test_points])
+    testXs = np.array([point._feature for point in test_points])
     testYs = np.array([point._label for point in test_points])
 
 
@@ -249,9 +246,9 @@ if __name__ == "__main__":
 #     orchestrator = OneVsAll(train_binary_features, [point._label for point in train_points],
 #                             binaryWinnow, bl_params,
 #                             test_binary_features, [point._label for point in test_points])
-    orchestrator = OneVsAll(trainXs, trainYs,
-                            BLRegression, bl_params,
-                            testXs, testYs)
+#     orchestrator = OneVsAll(trainXs, trainYs,
+#                             BLRegression, bl_params,
+#                             testXs, testYs)
     #orchestrator = OneVsAll(train_binary_features, [point._label for point in train_points],
     #                        binaryWinnow, bl_params,
     #                        test_binary_features, [point._label for point in test_points])
@@ -265,10 +262,10 @@ if __name__ == "__main__":
 
 
     #print 'And now Linear Kernel SVM'
-    #svm_params = [0.004, 'linear', 0.01]
-    #orchestrator = OneVsAll(trainXs, trainYs,
-    #                         OKSVM, svm_params,
-    #                         testXs, testYs)
+    svm_params = [0.004, 'linear', 0.01]
+    orchestrator = OneVsAll(trainXs, trainYs,
+                             OKSVM, svm_params,
+                             testXs, testYs)
     start = time.time()
     orchestrator.train()
     print 'Training duration = ', str(time.time()- start)

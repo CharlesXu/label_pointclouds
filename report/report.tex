@@ -8,7 +8,7 @@
 \usepackage[margin=1in]{geometry}
 \usepackage{color}
 \usepackage{algorithmicx}
-\author{Jessica Chemali, Kumar Shaurya Shankar, Trenton Tabor\\ \{jchema,kumarsha,trent\}@cs.cmu.edu}
+\author{Jessica Chemali, Kumar Shaurya Shankar, Trenton Tabor\\ \{jessb,kumarsha\}@cs.cmu.edu, ttabor@nrec.ri.cmu.edu}
 \title{16831 RoboStats Lab 2: \\Online Learning}
 \begin{document}
 \maketitle
@@ -21,10 +21,11 @@ The single biggest issue in the dataset is the bias in the data points. For inst
 \subsubsection{Implementation}
 The Bayes Linear Regressor has been implemented in Python, as is the rest of the framework. The external library dependency is only on numpy for matrix operations and normal distribution functions. We use scikit-learn for calculating the confusion matrix. The algorithm has not been modified for the purpose of this implementation.
 \subsubsection{Parameter Selection}
-The three parameter choices are the initial natural parameters for the prior on the weight vector, and the noise variance for the observation error. The latter was arbitrarily chosen, but {\color{blue}**TODO***} should be cross validated. For the prior, a 0 mean weight vector was chosen, and a hyper parameter of 1.0 for the precision matrix is chosen.
+The three parameter choices are the initial natural parameters for the prior on the weight vector, and the noise variance for the observation error. The latter was arbitrarily chosen based on manual parameter tweaking. For the prior, a 0 mean weight vector was chosen, and a hyper parameter of 1.0 for the precision matrix is chosen.
 
 It was observed that because of the disparity in the class data for one vs all, and since mere duplication of under-represented data is not a good reflection of the actual distribution, we use margin scaling to assign a label of +10 to positive samples, and -1 to negative samples. This works fairly well in practice.
 \subsubsection{Performance}
+Please see fig \ref{BLR_perf} and table \ref{BLR_tab}
 \begin{figure}[h]
 \centering
 \includegraphics[width=0.4\linewidth]{figs/BLR_3D_amtoan.png}
@@ -34,7 +35,7 @@ It was observed that because of the disparity in the class data for one vs all, 
 \includegraphics[width=0.4\linewidth, trim = 0 0 0 35, clip]{figs/BLR_3D_antoam.png}
 \includegraphics[width=0.4\linewidth]{figs/blr_antoam.png}
 \caption{Bayes Linear Regression trained on the am dataset, tested on the an dataset. }
-\label{}
+\label{BLR_perf}
 \end{figure}
 \begin{table}[h]
 \centering
@@ -55,12 +56,16 @@ No noise & 0.2 & 1.0& 0.87475848 & 0.35217954  &0.74221157  &0.99572913  &0.8671
 $0.1 \sigma$ noise & 0.2 & 1.0 & 0.583568 & 0.20260936 & 0.49171271 & 0.99528651  &0.45985532 & 0.8772\\ \hline
 \end{tabular}
 \caption{F1 score for BLR trained on an and tested on am}
+\label{BLR_tab}
 \end{table}
 \subsubsection{Learning Duration}
-Training duration =  2.15570998192\\
-Testing duration =  1.11386704445
+For a typical, noise free run
+Training duration =  2.15s\\
+Testing duration =  1.11s
+
+The complexity of the training is $O(n*d^2*c)$, since we see $n$ observations, compute the precision matrix with a $d\times d$ dimension and train $c$ classifiers. The complexity of testing is $O(d^3*c)$ as we need to invert the precision matrix to obtain the mean of the weight vector distribution, and have to choose from $c$ classes.
 \subsubsection{Robustness to Noise}
-To test robustness we first added 100 uniform features to the feature vector. This resulted in a surprisingly negligible drop in performance
+To test robustness we first added 100 uniform features to the feature vector. This resulted in a surprisingly negligible drop in performance.  When adding $0.1\sigma$ gaussian noise to the feature vector, however, the performance degraded significantly (see table)
 %------------------------------------------------------------------------
 \subsection{Multiclass exponentiated gradient algorithm}
 
@@ -79,20 +84,43 @@ The implementation of the algorithm is straightforward, it is only a few lines o
 
 For this algorithm we had 2 hyperparameters to tune: the learning rate $\nu$, and a threshold $\theta$. We looked at $\nu = \{0.001,0.01,0.1\} \times \theta = \{5,10,15\}$ and compared them against each other using 5-fold cross validation. the results were obtained with $\nu = 0.01$ and $\theta = 10$.
 
-{\color{blue} PLEASE ADD RESUlTS FROM noisy features for winnow. thanks you!}
-\begin{figure}[htp]
+\subsubsection{Performance}
+Please see fig \ref{winnow_perf} and table \ref{winnow_tab}. Typical runtime is 
+Training duration =  0.7940s
+Testing duration =  1.0329s
+\begin{figure}[h]
 \centering
-\includegraphics[scale=0.4,trim = 0.3 0.3 0.3 0.3,clip]{figs/winnow_amtoan_test1.eps}
-\includegraphics[scale=0.4]{figs/winnow_amtoan_test1_plot.eps}
-\caption{Multiclass Winnow trained on the am dataset, testing on the an}
-\vspace{0.1 in}
-\includegraphics[scale=0.4,trim = 0.3 0.3 0.3 0.3,clip]{figs/winnow_antoam_test1.eps}
-\includegraphics[scale=0.4]{figs/winnow_antoam_test1_plot.eps}
-\caption{Multiclass Winnow trained on the an dataset, testing on the am}
-\label{}
+\includegraphics[width=0.4\linewidth]{figs/winnow_3D_amtoan.png}
+\includegraphics[width=0.4\linewidth]{figs/winnow_am_to_an.png}
+\caption{Multi Class Winnow trained on the am dataset, tested on the an dataset. The confusion matrix has been scaled column-wise to enhance visibility.}
+\vspace{10pt}
+\includegraphics[width=0.4\linewidth, trim = 0 0 0 35, clip]{figs/winnow_3D_antoam.png}
+\includegraphics[width=0.4\linewidth]{figs/winnow_an_to_am.png}
+\caption{Multi Class Winnow trained on the an dataset, tested on the am dataset. }
+\label{winnow_perf}
 \end{figure}
 
-
+\begin{table}[h]
+\centering
+\begin{tabular}{||c|c|c||c|c|c|c|c||c||}
+\hline
+Comment&$\theta$&$\nu$&Veg & Wire & Pole & Ground & Facade & Accuracy\\ \hline
+No Noise&10 & 0.1 &  0.69866904 & 0.00249169  &0.19875776 & 0.98499241 & 0.4491265&0.7380\\ \hline
++100 Random&10 & 0.1 &  0.68435176 & 0.00913242&  0.52292535 & 0.98608336 & 0.53118099 &0.7467\\ \hline
+$0.1 \sigma$&10 & 0.1 & 0.62216288 & 0.   &       0.38092345  &0.97497053 & 0.50215229 & 0.7077\\ \hline
+\end{tabular}
+\caption{F1 score for Winnow trained on am and tested on an}
+\vspace{10pt}
+\begin{tabular}{||c|c|c||c|c|c|c|c||c||}
+\hline
+Comment&$\theta$&$\nu$&Veg & Wire & Pole & Ground & Facade & Accuracy\\ \hline
+No Noise&10 & 0.1 &  0.61175467&  0.2037779  & 0.48552064  &0.99495698 & 0.73060609&0.8968\\ \hline
++100 Random&10 & 0.1 &  0.5594218   &0.19851852 & 0.45119522 & 0.99630558 & 0.2908644 & 0.8614\\ \hline
+$0.1 \sigma$&10 & 0.1 & 0.56291784 & 0.23488045  &0.53571429 & 0.99622961 & 0.36735472 & 0.8677\\ \hline
+\end{tabular}
+\caption{F1 score for Winnow trained on an and tested on am}
+\label{winnow_tab}
+\end{table}
 %----------------------------------------------------------------------
 \subsection{Kernalized SVM}
 \subsubsection{Implementation}
@@ -100,24 +128,66 @@ We use the algorithm discussed in class for implementation. Specific modificatio
 
 For each trained one vs all predictor we add positive samples till a certain proportion ($0.2$) of the rest of the data points. We then assign these positive samples a label of +1 and all the negative samples a label of -1
 \subsubsection{Parameter Selection}
-The two main parameters for our dot product kernel are the learning rate and the regularizer. The smaller the learning rate, the larger the number of support vectors are added, and the more representative the overall function is. The regularizer term effectively controls the shrinking of the $\alpha$s. 
+The two main parameters for our dot product kernel are the learning rate and the regularizer. The smaller the learning rate, the larger the number of support vectors are added, and the more representative the overall function is. The regularizer term effectively controls the shrinking of the $\alpha$s. The parameters were obtained by running cross validation over different orders of magnitude for $\eta$ and $\lambda$ as shown in table \ref{cross_svm}
 
 \subsubsection{Performance}
+Please see fig \ref{svm_fig} and table \ref{svm_tab}. Typical run time for noise free is 
+Training duration =  8.5953s
+Testing duration =  4.1104s
 \begin{figure}[h]
 \centering
-\includegraphics[width=0.4\linewidth]{figs/BLR_3D_amtoan.png}
-\includegraphics[width=0.4\linewidth]{figs/blr_amtoan.png}
-\caption{Bayes Linear Regression trained on the am dataset, tested on the an dataset. The confusion matrix has been scaled column-wise to enhance visibility.}
+\includegraphics[width=0.4\linewidth]{figs/kernel_3D_amtoan.png}
+\includegraphics[width=0.4\linewidth]{figs/kernel_am_to_an.png}
+\caption{Kernel SVM trained on the am dataset, tested on the an dataset. The confusion matrix has been scaled column-wise to enhance visibility.}
 \vspace{10pt}
-\includegraphics[width=0.4\linewidth, trim = 0 0 0 35, clip]{figs/BLR_3D_antoam.png}
-\includegraphics[width=0.4\linewidth]{figs/blr_antoam.png}
-\caption{Bayes Linear Regression trained on the am dataset, tested on the an dataset. }
-\label{}
+\includegraphics[width=0.4\linewidth, trim = 0 0 0 35, clip]{figs/kernel_3D_antoam.png}
+\includegraphics[width=0.4\linewidth]{figs/kernel_an_to_am.png}
+\caption{Kernel SVM trained on the an dataset, tested on the am dataset. }
+\label{svm_fig}
 \end{figure}
+
+\begin{table}
+\centering
+\begin{tabular}{||c|c||c|c|c|c|c|c||}
+\hline
+$\eta$&$\lambda$&Veg & Wire & Pole & Ground & Facade & Accuracy\\ \hline
+0.004 & 0.01 &  0.48687824 &  0.06393718 &  0.02846637 &  0.16646118 & 0.22856888 & 0.63279377\\ \hline
+0.01 & 0.01 & 0.36033327 & 0.23859458 & 0.12689121 & 0.07070051 & 0.20230931 &  0.59520834\\ \hline
+0.1 & 0.01 & 0.11400762 & 0.19878134 & 0.08592745 & 0.44138744 & 0.19123841 & 0.50478872\\ \hline
+0.0001 & 0.01 &  0.6059946 &  0.    &      0.46552533 & 0.01653522 & 0.05532819 & 0.62880983 \\ \hline
+0.004 & 0.1 & 0.55922353 & 0.  &        0.05335758 & 0.04923961 & 0.15238126 & 0.54600107\\ \hline
+0.004 & 10 &  0.43752623 & 0.  &        0.0882957 &  0.65539162 & 0. & 0.62219963  \\ \hline
+\end{tabular}
+\caption{F1 scores for cross validation tests on linear SVM $\eta$ and $\lambda$}
+\label{cross_svm}
+\end{table}
+
+\begin{table}[h]
+\centering
+\begin{tabular}{||c|c|c||c|c|c|c|c||c||}
+\hline
+Comment&$\eta$&$\lambda$&Veg & Wire & Pole & Ground & Facade & Accuracy\\ \hline
+No Noise&0.004 & 0.01 &0.77269466  & 0.         &  0.36314363  & 0.98022422   &0.63411819  & 0.7913\\ \hline
++100 Random&0.004 & 0.01 &  0.7934477 &  0.     &     0.         & 0.94660439 & 0. &  0.7669\\ \hline
+$0.1 \sigma$&0.004 & 0.01 & 0.79392206  & 0.     &      0.3847298   & 0.97496277  & 0.60604134 & 0.8039\\ \hline
+\end{tabular}
+\caption{F1 score for Kernel SVM trained on am and tested on an}
+\vspace{10pt}
+\begin{tabular}{||c|c|c||c|c|c|c|c||c||}
+\hline
+Comment&$\eta$&$\lambda$&Veg & Wire & Pole & Ground & Facade & Accuracy\\ \hline
+No Noise&0.004 & 0.01 & 0.48858833   &0.00225606  &0.6068527   & 0.99702255 &  0.716908  & 0.9015 \\ \hline
++100 Random&0.004 & 0.01 & 0.00240297 &  0.08423236  & 0.00833912 &  0.9772284&
+   0.233722 &0.7779\\ \hline
+$0.1 \sigma$&0.004 & 0.01 &  0.51048577  & 0.      &     0.66762756  & 0.99718548  & 0.5728698  &0.8836\\ \hline
+\end{tabular}
+\caption{F1 score for Kernel SVM trained on an and tested on am}
+\label{svm_tab}
+\end{table}
 %-----------------------------------------------------------------------
 \section{Comparative Analysis of Learners}
-SVM fits the best to the data due to the advantage of the kernels.
+Surprisingly, the Bayes Linear Regression approach worked the best, perhaps because of the application of margin scaling. It seems that margin scaling is a more effective method of compensating for unequal distribution of training data than proportional data duplication. All methods seem to be affected very strongly by the assymetric data distribution.
 
 \section{Future Work}
-Augment features using spatial context, e.g., 3D HoG.\\
+Future work can involve trying alternate techniques to mitigate the dataset bias problems, such as slack scaling or different loss functions. We could also augment features using features that encode spatial context, e.g., 3D HoG or sparsity in some way to better disambiguate the pole and wire classes. Judging by it's performance, I would prefer using some variant of regression on a real world robot.
 \end{document}

@@ -118,7 +118,7 @@ if __name__ == "__main__":
             orchestrator = OneVsAll(X[perm_idx[idx_train],:], Y[perm_idx[idx_train]],binaryWinnowvar, param,[], [])
             orchestrator.train()
             for j in range(cv_fold):
-                print "j: ",j
+#                 print "j: ",j
                 idx_test = cv_idx_test(ds_train.r, cv_fold, j + 1)
                 (predicted_labels,cm[j,:,:],acc[i,j]) = orchestrator.cvtest(X[perm_idx[idx_test],:],Y[perm_idx[idx_test]])
             cum_cm[i,:,:] = np.mean(cm,axis=0)
