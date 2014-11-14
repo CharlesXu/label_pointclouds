@@ -9,6 +9,7 @@ class Point:
     
     label_dict = {'1004':0, '1100':1, '1103':2, '1200':3, '1400':4} 
     label_rev_dict = {v: k for k, v in label_dict.items()}
+    label_human = {0:'Veg', 1:'Wire', 2:'Pole', 3:'Ground', 4:'Facade'}
         
     def __init__(self, x=0.0, y=0.0, z=0.0, label=0, feature=[]):
         self._x = x 

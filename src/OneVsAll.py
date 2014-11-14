@@ -64,7 +64,7 @@ class OneVsAll:
             #Rebalance the data
             (trainX,trainY) = correct_imbalance(trainX,trainY)
             trainY[trainY == 0] = -1
-            trainY[trainY == 1] = 1
+            trainY[trainY == 1] = 10
             #print 'shapes::',trainY[trainY==-1].shape, trainY[trainY==1].shape
             trainY = trainY[:,0]
             #print trainY.shape, trainX.shape
@@ -100,14 +100,20 @@ class OneVsAll:
         #True == 1, thus sum
         print '[OneVsAll] Accuracy is = ', float(sum(evals))/len(evals)
         #Generate confusion matrix
-        labels = [Point.label_rev_dict[i] for i in range(len(Point.label_dict))]
+        labels = [Point.label_human[i] for i in range(len(Point.label_dict))]
 #         labels = [Point.label_rev_dict[i] for i in [0,3]]
         
         
         cm =  confusion_matrix(true_labels, predicted_labels )
-        pdb.set_trace()
+        #Calculate F1 scores
+        scores = np.zeros(len(Point.label_dict))
+        for i in range(len(Point.label_dict)):
+            tp = cm[i,i]
+            fp = np.sum(cm[:,i]) - tp
+            fn = np.sum(cm[i,:]) - tp
+            scores[i] = 2.0*tp/(2.0*tp+fp+fn)
+        print scores
         cm = cm*1.0/np.sum(cm, axis = 1)
-        print cm
         fig = plt.figure()
         ax = fig.add_subplot(111)
         cax = ax.matshow(cm)
@@ -123,6 +129,7 @@ class OneVsAll:
 #                             horizontalalignment='center',
 #                             verticalalignment='center')
         plt.show()
+        
         
         return predicted_labels
 
@@ -150,7 +157,6 @@ class OneVsAll:
 
         cm =  confusion_matrix(true_labels, predicted_labels )
 
-        pdb.set_trace()
         cm = cm /np.sum(cm, axis =1)
         print "confusion matrix"
         print cm
@@ -230,13 +236,13 @@ if __name__ == "__main__":
 #     orchestrator = OneVsAll(train_binary_features, [point._label for point in train_points],
 #                             binaryWinnow, bl_params,
 #                             test_binary_features, [point._label for point in test_points])
-#     orchestrator = OneVsAll([point._feature for point in train_points], [point._label for point in train_points],
-#                             BLRegression, bl_params,
-#                             [point._feature for point in test_points], [point._label for point in test_points])
+    orchestrator = OneVsAll(trainXs, [point._label for point in train_points],
+                            BLRegression, bl_params,
+                            [point._feature for point in test_points], [point._label for point in test_points])
     #orchestrator = OneVsAll(train_binary_features, [point._label for point in train_points],
     #                        binaryWinnow, bl_params,
     #                        test_binary_features, [point._label for point in test_points])
-    orchestrator = OneVsAll(trainXs, trainYs,binaryWinnowvar, [10,0.01],testXs, testYs)
+#     orchestrator = OneVsAll(trainXs, trainYs,binaryWinnowvar, [10,0.01],testXs, testYs)
     #orchestrator = OneVsAll(trainXs, trainYs,BLRegression, bl_params,testXs, testYs)
     #orchestrator = OneVsAll(train_binary_features, [point._label for point in train_points],
     #                         binaryWinnow, [10,0.01],
