@@ -19,6 +19,7 @@ import matplotlib.pyplot as plt
 import pdb
 from OnlineKernelSVM import OKSVM
 import plot_points
+import time
 
 class OneVsAll:
     def __init__(self, features, labels, classifier_class, classifier_params, test_features = None, test_labels = None):
@@ -86,6 +87,7 @@ class OneVsAll:
         return self.classifiers[best_classifier][1]
     
     def test(self):
+        start = time.time()
         evals = []
         true_labels = []
         predicted_labels = []
@@ -116,6 +118,7 @@ class OneVsAll:
             fn = np.sum(cm[i,:]) - tp
             scores[i] = 2.0*tp/(2.0*tp+fp+fn)
         print scores
+        print 'Testing duration = ', str(time.time()- start)
         cm = cm*1.0/np.sum(cm, axis = 1)
         fig = plt.figure()
         ax = fig.add_subplot(111)
@@ -159,7 +162,14 @@ class OneVsAll:
 #         labels = [Point.label_rev_dict[i] for i in [0,3]]
 
         cm =  confusion_matrix(true_labels, predicted_labels )
-
+        #Calculate F1 scores
+        scores = np.zeros(len(Point.label_dict))
+        for i in range(len(Point.label_dict)):
+            tp = cm[i,i]
+            fp = np.sum(cm[:,i]) - tp
+            fn = np.sum(cm[i,:]) - tp
+            scores[i] = 2.0*tp/(2.0*tp+fp+fn)
+        print scores
         cm = cm /np.sum(cm, axis =1)
         print "confusion matrix"
         print cm
@@ -181,7 +191,7 @@ class OneVsAll:
 #         plt.show()
 
 
-        return predicted_labels,cm,acc
+        return predicted_labels,cm,acc,scores
 
 def correct_imbalance(Xs,Ys):
     class_id = np.unique(Ys)
@@ -225,9 +235,9 @@ if __name__ == "__main__":
 
     bl_params = [0.2, 0.0, 1.0]
 
-    trainXs = np.array([point._feature for point in train_points])
+    trainXs = np.array([point.add_random_features(100) for point in train_points])
     trainYs = np.array([point._label for point in train_points])
-    testXs = np.array([point._feature for point in test_points])
+    testXs = np.array([point.add_random_features(100) for point in test_points])
     testYs = np.array([point._label for point in test_points])
 
 
@@ -239,9 +249,9 @@ if __name__ == "__main__":
 #     orchestrator = OneVsAll(train_binary_features, [point._label for point in train_points],
 #                             binaryWinnow, bl_params,
 #                             test_binary_features, [point._label for point in test_points])
-    orchestrator = OneVsAll(trainXs, [point._label for point in train_points],
+    orchestrator = OneVsAll(trainXs, trainYs,
                             BLRegression, bl_params,
-                            [point._feature for point in test_points], [point._label for point in test_points])
+                            testXs, testYs)
     #orchestrator = OneVsAll(train_binary_features, [point._label for point in train_points],
     #                        binaryWinnow, bl_params,
     #                        test_binary_features, [point._label for point in test_points])
@@ -259,7 +269,10 @@ if __name__ == "__main__":
     #orchestrator = OneVsAll(trainXs, trainYs,
     #                         OKSVM, svm_params,
     #                         testXs, testYs)
-
+    start = time.time()
     orchestrator.train()
+    print 'Training duration = ', str(time.time()- start)
+    
     predicted_labels = orchestrator.test()
+    
     plot_points.plot_predicted_labels(test_points, predicted_labels)
